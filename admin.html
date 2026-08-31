@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NovaPlus — Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -471,18 +473,31 @@ const DEFAULT_CONFIG = {
   textOverrides: {},
 };
 
-function loadConfig(){
+const firebaseConfig = {
+  apiKey: "AIzaSyB9lF0wP9-fx1qR-Tiz7XPJIx13GqcKsso",
+  authDomain: "novaplus-6145d.firebaseapp.com",
+  projectId: "novaplus-6145d",
+  storageBucket: "novaplus-6145d.firebasestorage.app",
+  messagingSenderId: "22781611991",
+  appId: "1:22781611991:web:1dc515371a35eb99038592",
+  measurementId: "G-K2YTXVJ0TY"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+async function loadConfig(){
   try {
-    const raw = localStorage.getItem('novayield_config');
-    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), JSON.parse(raw));
+    const snap = await db.collection('meta').doc('config').get();
+    if (!snap.exists) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), snap.data());
   } catch(e){ return JSON.parse(JSON.stringify(DEFAULT_CONFIG)); }
 }
-function saveConfig(cfg){
-  localStorage.setItem('novayield_config', JSON.stringify(cfg));
+async function saveConfig(cfg){
+  try { await db.collection('meta').doc('config').set(cfg); }
+  catch(e){ toast('Не удалось сохранить: нет соединения с базой'); }
 }
 
-let CONFIG = loadConfig();
+let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); // placeholder until boot() loads the real config
 
 const DEFAULT_TEXTS = { ru: {"demoText":"Демо-версия интерфейса. Данные ниже — тестовые, реальных начислений и выплат нет.","portfolio":"Портфель","totalBalance":"Общий баланс","days":"дн.","topup":"Пополнить USDT","stakingPlans":"Тарифы стейкинга","demoRates":"демо-ставки","referral":"Реферальная программа","refRateText":"от суммы депозита каждого приглашённого — начисляется на ваш баланс","copy":"Скопировать","invited":"Приглашено","earned":"Заработано, USDT","yourInvites":"Ваши приглашённые","settings":"Настройки","language":"Язык","account":"Аккаунт","notifications":"Уведомления","on":"Включены","support":"Поддержка","navPortfolio":"Портфель","navReferral":"Рефералы","navSettings":"Настройки","stakeBtn":"Застейкать","topupToast":"Демо-режим: пополнение недоступно","copiedToast":"Ссылка скопирована","topupTitle":"Пополнение USDT","enterAmount":"Сумма пополнения","chooseNetwork":"Сеть","feeLow":"мин. комиссия","continue":"Продолжить","sendExactly":"Отправьте точную сумму","depositAddress":"Адрес для пополнения","addrHint":"Отправляйте только USDT в выбранной сети. Средства в другой сети будут потеряны.","iSent":"Я отправил(а)","back":"Назад","pendingTitle":"Ожидаем поступление","pendingSub":"Обычно это занимает 1–3 подтверждения сети. Баланс обновится автоматически.","done":"Готово","addrCopied":"Адрес скопирован","topupBtn":"Пополнить USDT/Банковская Карта","topupBtnShort":"Пополнить","withdrawBtn":"Вывести","withdrawTitle":"Вывод USDT","withdrawAmountLabel":"Сумма вывода","withdrawAddressLabel":"Адрес USDT-кошелька","withdrawAddressPlaceholder":"Введите адрес кошелька","withdrawNetworkLabel":"Сеть","withdrawFeeLabel":"Комиссия сети","withdrawContinue":"Продолжить","withdrawConfirm":"Подтвердить вывод","withdrawReviewTitle":"Проверьте детали вывода","withdrawToAddress":"Адрес получения","withdrawCreatedTitle":"Заявка на вывод создана","withdrawCreatedSub":"Обычно обработка занимает до 30 минут. Баланс уже обновлён.","insufficientBalance":"Недостаточно средств на балансе","openPositions":"Открытые сделки","openTradeTitle":"Открыть сделку","tradeAmountLabel":"Размер позиции","leverageLabel":"Плечо","tpLabel":"Тейк-профит","slLabel":"Стоп-лосс","entryPriceLabel":"Цена входа","tradeSizeLabel":"Объём с плечом","liqLabel":"Ликвидация","openTradeBtn":"Открыть сделку","tpBelowPrice":"Тейк-профит должен быть выше цены для покупки / ниже для продажи","slWrongSide":"Стоп-лосс должен быть ниже цены для покупки / выше для продажи","positionClosedToast":"Сделка закрыта","tpHitToast":"Сработал тейк-профит","slHitToast":"Сработал стоп-лосс","entry":"Вход","size":"Объём","pnlLabel":"P&L","positionOpenedToast":"открыта","editBtn":"Изменить","editTradeTitle":"Изменить сделку","currentPriceLabel":"Текущая цена","saveChanges":"Сохранить","changesSavedToast":"Изменения сохранены","myTradesTab":"Открытые сделки","marketsTab":"Рынки","noOpenTrades":"Нет открытых сделок","closePartLabel":"Закрыть часть позиции","overTerm":"за срок","minFrom":"мин.","activeStakes":"Активные стейки","stakeAmountLabel":"Сумма стейка","available":"Доступно","max":"MAX","reviewTitle":"Проверьте условия","amountLbl":"Сумма","durationLbl":"Срок","apyLbl":"APY","estEarnLbl":"Прогноз дохода","unlockLbl":"Разблокировка","agreeText":"Понимаю, что средства заблокированы до даты разблокировки","confirmStakeBtn":"Подтвердить стейк","stakeCreatedTitle":"Стейк открыт","daysWord":"дней","unlocksOn":"Разблокировка","earnLabel":"доход","payMethodTitle":"Способ пополнения","methodUsdt":"USDT","methodUsdtSub":"Крипто-перевод · TRC20 / ERC20 / BEP20","methodCard":"Банковская карта","methodCardSub":"Visa · Mastercard · мгновенное зачисление","cardDetailsTitle":"Перевод на карту","cardNumber":"Номер карты","expiry":"Срок","cardholder":"Держатель карты","pay":"Оплатить","processingTitle":"Обрабатываем платёж…","processingSub":"Это займёт несколько секунд","cardSuccessTitle":"Баланс пополнен","creditedText":"зачислено на баланс","uahLabel":"грн","cardRangeHint":"Мин. 2 250 – макс. 29 999 грн","recipientCard":"Номер карты для перевода","recipientName":"Получатель","cardTransferHint":"Переведите точную сумму на указанную карту. Баланс пополнится после подтверждения перевода.","iTransferred":"Я перевёл(а)","markets":"Рынки","navMarkets":"Рынки","today":"за сегодня","marketsDemoNote":"Крипта и золото (PAXG) — реальные цены Binance, обновляются каждые 3 секунды. Форекс и USD/UAH — официальные курсы ЕЦБ/НБУ, которые сами эти институты публикуют не чаще раза в день. Товары и биржевые индексы убраны из списка — для них нет бесплатного официального источника без платного API-ключа.","todayLabel":"Сегодня","minLabel":"Минимум","maxLabel":"Максимум","sellLabel":"Продать","buyLabel":"Купить","spreadLabel":"Спред","searchPlaceholder":"Поиск: BTC, EUR, Gold…","catAll":"Все","catCrypto":"Крипто","catForex":"Форекс","catCommodity":"Товары","catIndex":"Индексы","noResults":"Ничего не найдено","liveTag":"LIVE","connectingTag":"…"}, uk: {"demoText":"Демо-версія інтерфейсу. Дані нижче — тестові, реальних нарахувань і виплат немає.","portfolio":"Портфель","totalBalance":"Загальний баланс","days":"дн.","topup":"Поповнити USDT","stakingPlans":"Тарифи стейкінгу","demoRates":"демо-ставки","referral":"Реферальна програма","refRateText":"від суми депозиту кожного запрошеного — нараховується на ваш баланс","copy":"Скопіювати","invited":"Запрошено","earned":"Зароблено, USDT","yourInvites":"Ваші запрошені","settings":"Налаштування","language":"Мова","account":"Акаунт","notifications":"Сповіщення","on":"Увімкнено","support":"Підтримка","navPortfolio":"Портфель","navReferral":"Реферали","navSettings":"Налаштування","stakeBtn":"Застейкати","topupToast":"Демо-режим: поповнення недоступне","copiedToast":"Посилання скопійовано","topupTitle":"Поповнення USDT","enterAmount":"Сума поповнення","chooseNetwork":"Мережа","feeLow":"мін. комісія","continue":"Продовжити","sendExactly":"Надішліть точну суму","depositAddress":"Адреса для поповнення","addrHint":"Надсилайте лише USDT в обраній мережі. Кошти в іншій мережі буде втрачено.","iSent":"Я надіслав(ла)","back":"Назад","pendingTitle":"Очікуємо надходження","pendingSub":"Зазвичай це займає 1–3 підтвердження мережі. Баланс оновиться автоматично.","done":"Готово","addrCopied":"Адресу скопійовано","topupBtn":"Поповнити USDT/Банківська Картка","topupBtnShort":"Поповнити","withdrawBtn":"Вивести","withdrawTitle":"Виведення USDT","withdrawAmountLabel":"Сума виведення","withdrawAddressLabel":"Адреса USDT-гаманця","withdrawAddressPlaceholder":"Введіть адресу гаманця","withdrawNetworkLabel":"Мережа","withdrawFeeLabel":"Комісія мережі","withdrawContinue":"Продовжити","withdrawConfirm":"Підтвердити виведення","withdrawReviewTitle":"Перевірте деталі виведення","withdrawToAddress":"Адреса отримання","withdrawCreatedTitle":"Заявку на виведення створено","withdrawCreatedSub":"Зазвичай обробка займає до 30 хвилин. Баланс уже оновлено.","insufficientBalance":"Недостатньо коштів на балансі","openPositions":"Відкриті угоди","openTradeTitle":"Відкрити угоду","tradeAmountLabel":"Розмір позиції","leverageLabel":"Плече","tpLabel":"Тейк-профіт","slLabel":"Стоп-лосс","entryPriceLabel":"Ціна входу","tradeSizeLabel":"Обсяг з плечем","liqLabel":"Ліквідація","openTradeBtn":"Відкрити угоду","tpBelowPrice":"Тейк-профіт має бути вищим за ціну для купівлі / нижчим для продажу","slWrongSide":"Стоп-лосс має бути нижчим за ціну для купівлі / вищим для продажу","positionClosedToast":"Угоду закрито","tpHitToast":"Спрацював тейк-профіт","slHitToast":"Спрацював стоп-лосс","entry":"Вхід","size":"Обсяг","pnlLabel":"P&L","positionOpenedToast":"відкрита","editBtn":"Змінити","editTradeTitle":"Змінити угоду","currentPriceLabel":"Поточна ціна","saveChanges":"Зберегти","changesSavedToast":"Зміни збережено","myTradesTab":"Відкриті угоди","marketsTab":"Ринки","noOpenTrades":"Немає відкритих угод","closePartLabel":"Закрити частину позиції","overTerm":"за термін","minFrom":"мін.","activeStakes":"Активні стейки","stakeAmountLabel":"Сума стейку","available":"Доступно","max":"MAX","reviewTitle":"Перевірте умови","amountLbl":"Сума","durationLbl":"Термін","apyLbl":"APY","estEarnLbl":"Прогноз доходу","unlockLbl":"Розблокування","agreeText":"Розумію, що кошти заблоковані до дати розблокування","confirmStakeBtn":"Підтвердити стейк","stakeCreatedTitle":"Стейк відкрито","daysWord":"днів","unlocksOn":"Розблокування","earnLabel":"дохід","payMethodTitle":"Спосіб поповнення","methodUsdt":"USDT","methodUsdtSub":"Крипто-переказ · TRC20 / ERC20 / BEP20","methodCard":"Банківська картка","methodCardSub":"Visa · Mastercard · миттєве зарахування","cardDetailsTitle":"Переказ на картку","cardNumber":"Номер картки","expiry":"Термін","cardholder":"Власник картки","pay":"Оплатити","processingTitle":"Обробляємо платіж…","processingSub":"Це займе декілька секунд","cardSuccessTitle":"Баланс поповнено","creditedText":"зараховано на баланс","uahLabel":"грн","cardRangeHint":"Мін. 2 250 – макс. 29 999 грн","recipientCard":"Номер картки для переказу","recipientName":"Отримувач","cardTransferHint":"Переведіть точну суму на вказану картку. Баланс поповниться після підтвердження переказу.","iTransferred":"Я переказав(ла)","markets":"Ринки","navMarkets":"Ринки","today":"за сьогодні","marketsDemoNote":"Крипта і золото (PAXG) — реальні ціни Binance, оновлюються кожні 3 секунди. Форекс і USD/UAH — офіційні курси ЄЦБ/НБУ, які самі ці установи публікують не частіше разу на день. Товари та біржові індекси прибрано зі списку — для них немає безкоштовного офіційного джерела без платного API-ключа.","todayLabel":"Сьогодні","minLabel":"Мінімум","maxLabel":"Максимум","sellLabel":"Продати","buyLabel":"Купити","spreadLabel":"Спред","searchPlaceholder":"Пошук: BTC, EUR, Gold…","catAll":"Всі","catCrypto":"Крипто","catForex":"Форекс","catCommodity":"Товари","catIndex":"Індекси","noResults":"Нічого не знайдено","liveTag":"LIVE","connectingTag":"…"} };
 
@@ -715,21 +730,11 @@ function toast(msg){
 }
 
 /* ---------- referral program requests (one entry per Telegram user) ---------- */
-function loadReferralRequests(){
-  try {
-    const raw = localStorage.getItem('novayield_referral_requests');
-    return raw ? JSON.parse(raw) : {};
-  } catch(e){ return {}; }
-}
-function saveReferralRequests(map){
-  localStorage.setItem('novayield_referral_requests', JSON.stringify(map));
-}
 function fmtDate(iso){
   if (!iso) return '—';
   return new Date(iso).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
-function renderRequests(){
-  const map = loadReferralRequests();
+function renderRequests(map){
   const userIds = Object.keys(map);
   const empty = document.getElementById('reqEmpty');
   const table = document.getElementById('reqTable');
@@ -771,38 +776,28 @@ function renderRequests(){
     `;
   }).join('');
 }
-function setReqStatus(userId, status){
-  const map = loadReferralRequests();
-  if (!map[userId]) return;
-  map[userId].status = status;
-  map[userId].decidedAt = new Date().toISOString();
-  saveReferralRequests(map);
-  renderRequests();
-  toast(status === 'approved' ? 'Заявка одобрена' : 'Заявка отклонена');
-}
-setInterval(renderRequests, 3000);
-
-/* ---------- real accounts found on this device (localStorage-scoped) ---------- */
-function loadReferralsMap(){
+async function setReqStatus(userId, status){
   try {
-    const raw = localStorage.getItem('novayield_referrals');
-    return raw ? JSON.parse(raw) : {};
-  } catch(e){ return {}; }
+    await db.collection('referralRequests').doc(userId).update({
+      status, decidedAt: new Date().toISOString(),
+    });
+    toast(status === 'approved' ? 'Заявка одобрена' : 'Заявка отклонена');
+  } catch(e){ toast('Ошибка сохранения'); }
 }
+db.collection('referralRequests').onSnapshot(snapshot=>{
+  const map = {};
+  snapshot.forEach(doc=>{ map[doc.id] = doc.data(); });
+  renderRequests(map);
+});
+
+/* ---------- real accounts (Firestore-backed, visible from any device) ---------- */
+let latestAccounts = [];
+let latestReferrals = [];
 function renderUsers(){
   const empty = document.getElementById('usersEmpty');
   const table = document.getElementById('usersTable');
   const body = document.getElementById('usersBody');
-  const rows = [];
-  for (let i=0; i<localStorage.length; i++){
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith('novayield_account_')) continue;
-    const userId = key.replace('novayield_account_', '');
-    try {
-      const acc = JSON.parse(localStorage.getItem(key));
-      rows.push({ userId, acc });
-    } catch(e){ /* skip malformed entry */ }
-  }
+  const rows = latestAccounts;
   if (rows.length === 0){
     empty.style.display = 'block';
     table.style.display = 'none';
@@ -812,8 +807,7 @@ function renderUsers(){
   table.style.display = 'table';
   const verifLabel = { none:'Не пройдена', pending:'На проверке', verified:'Подтверждена', rejected:'Отклонена' };
   const verifClass = { none:'', pending:'pending', verified:'active', rejected:'rejected' };
-  const refsMap = loadReferralsMap();
-  const refEntries = Object.values(refsMap);
+  const refEntries = latestReferrals;
   body.innerHTML = rows.map(({userId, acc})=>{
     const invited = refEntries.filter(r=>r.referrerId===userId);
     const earned = invited.reduce((s,r)=> s + (r.bonusEarned||0), 0);
@@ -840,59 +834,42 @@ function renderUsers(){
   `;
   }).join('');
 }
-function setUserVerif(userId, status){
-  const key = 'novayield_account_' + userId;
-  let acc;
-  try { acc = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){ acc = {}; }
-  acc.verifState = status;
-  localStorage.setItem(key, JSON.stringify(acc));
-  renderUsers();
-  toast(status === 'verified' ? 'Верификация подтверждена' : 'Верификация отклонена');
+async function setUserVerif(userId, status){
+  try {
+    await db.collection('accounts').doc(userId).set({ verifState: status }, {merge:true});
+    toast(status === 'verified' ? 'Верификация подтверждена' : 'Верификация отклонена');
+  } catch(e){ toast('Ошибка сохранения'); }
 }
-function editUserBalance(userId){
-  const key = 'novayield_account_' + userId;
-  let acc;
-  try { acc = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){ acc = {}; }
+async function editUserBalance(userId){
+  const acc = (latestAccounts.find(r=>r.userId===userId)||{}).acc || {};
   const current = acc.balance || 0;
   const input = prompt('Новый баланс для ' + userId + ' (USDT):', current.toFixed(2));
   if (input === null) return;
   const val = parseFloat(input.replace(',', '.'));
   if (isNaN(val) || val < 0){ toast('Некорректная сумма'); return; }
-  acc.balance = val;
-  localStorage.setItem(key, JSON.stringify(acc));
-  renderUsers();
-  toast('Баланс обновлён');
+  try {
+    await db.collection('accounts').doc(userId).set({ balance: val }, {merge:true});
+    toast('Баланс обновлён');
+  } catch(e){ toast('Ошибка сохранения'); }
 }
-function toggleBlockUser(userId){
-  const key = 'novayield_account_' + userId;
-  let acc;
-  try { acc = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){ acc = {}; }
-  acc.blocked = !acc.blocked;
-  localStorage.setItem(key, JSON.stringify(acc));
-  renderUsers();
-  toast(acc.blocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован');
+async function toggleBlockUser(userId){
+  const acc = (latestAccounts.find(r=>r.userId===userId)||{}).acc || {};
+  const newBlocked = !acc.blocked;
+  try {
+    await db.collection('accounts').doc(userId).set({ blocked: newBlocked }, {merge:true});
+    toast(newBlocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован');
+  } catch(e){ toast('Ошибка сохранения'); }
 }
-setInterval(renderUsers, 3000);
+db.collection('accounts').onSnapshot(snapshot=>{
+  latestAccounts = snapshot.docs.map(doc=>({ userId: doc.id, acc: doc.data() }));
+  renderUsers();
+});
+db.collection('referrals').onSnapshot(snapshot=>{
+  latestReferrals = snapshot.docs.map(doc=>doc.data());
+  renderUsers();
+});
 
 /* ---------- pending deposits: user says "I sent it", admin verifies and credits manually ---------- */
-function loadPendingDeposits(){
-  try {
-    const raw = localStorage.getItem('novayield_pending_deposits');
-    return raw ? JSON.parse(raw) : [];
-  } catch(e){ return []; }
-}
-function savePendingDeposits(list){
-  localStorage.setItem('novayield_pending_deposits', JSON.stringify(list));
-}
-function loadReferrals(){
-  try {
-    const raw = localStorage.getItem('novayield_referrals');
-    return raw ? JSON.parse(raw) : {};
-  } catch(e){ return {}; }
-}
-function saveReferrals(map){
-  localStorage.setItem('novayield_referrals', JSON.stringify(map));
-}
 function referralRateFor(count){
   if (count < 1) return 0;
   const tiers = CONFIG.referralTiers;
@@ -901,32 +878,37 @@ function referralRateFor(count){
   }
   return tiers[tiers.length-1].rate;
 }
-function creditReferrerForDeposit(depositorUserId, depositUsdt){
-  const refs = loadReferrals();
-  const entry = refs[depositorUserId];
-  if (!entry) return;
-  const referrerId = entry.referrerId;
-  const referrerInvitedCount = Object.values(refs).filter(r=>r.referrerId===referrerId).length;
-  const rate = referralRateFor(referrerInvitedCount);
-  const bonus = depositUsdt * (rate/100);
-  entry.totalDeposited = (entry.totalDeposited||0) + depositUsdt;
-  entry.bonusEarned = (entry.bonusEarned||0) + bonus;
-  saveReferrals(refs);
-  const key = 'novayield_account_' + referrerId;
+async function creditReferrerForDeposit(depositorUserId, depositUsdt){
   try {
-    const raw = localStorage.getItem(key);
-    const acc = raw ? JSON.parse(raw) : { balance:0, activeStakes:[], activeTrades:[], closedTrades:[], verifState:'none' };
-    acc.balance = (acc.balance||0) + bonus;
-    localStorage.setItem(key, JSON.stringify(acc));
+    const refDoc = db.collection('referrals').doc(depositorUserId);
+    const refSnap = await refDoc.get();
+    if (!refSnap.exists) return; // this depositor wasn't referred by anyone
+    const entry = refSnap.data();
+    const referrerId = entry.referrerId;
+    const allRefsSnap = await db.collection('referrals').get();
+    let referrerInvitedCount = 0;
+    allRefsSnap.forEach(d=>{ if (d.data().referrerId === referrerId) referrerInvitedCount++; });
+    const rate = referralRateFor(referrerInvitedCount);
+    const bonus = depositUsdt * (rate/100);
+    await refDoc.update({
+      totalDeposited: (entry.totalDeposited||0) + depositUsdt,
+      bonusEarned: (entry.bonusEarned||0) + bonus,
+    });
+    const accDoc = db.collection('accounts').doc(referrerId);
+    await db.runTransaction(async (tx)=>{
+      const snap = await tx.get(accDoc);
+      const current = snap.exists ? (snap.data().balance||0) : (CONFIG.startingBalance||0);
+      tx.set(accDoc, { balance: current + bonus }, {merge:true});
+    });
   } catch(e){ /* ignore */ }
 }
+let latestPendingDeposits = [];
 function renderDeposits(){
   const empty = document.getElementById('depEmpty');
   const table = document.getElementById('depTable');
   const body = document.getElementById('depBody');
   const badge = document.getElementById('depBadge');
-  const all = loadPendingDeposits();
-  const pending = all.filter(d=>d.status==='pending');
+  const pending = latestPendingDeposits;
 
   badge.style.display = pending.length > 0 ? 'inline-block' : 'none';
   badge.textContent = pending.length;
@@ -948,45 +930,51 @@ function renderDeposits(){
       <td>${fmtDate(d.createdAt)}</td>
       <td>
         <div class="req-actions">
-          <button class="approve" onclick="decideDeposit(${d.id}, 'approved')">Одобрить</button>
-          <button class="reject" onclick="decideDeposit(${d.id}, 'rejected')">Отклонить</button>
+          <button class="approve" onclick="decideDeposit('${d.id}', 'approved')">Одобрить</button>
+          <button class="reject" onclick="decideDeposit('${d.id}', 'rejected')">Отклонить</button>
         </div>
       </td>
     </tr>
   `).join('');
 }
-function decideDeposit(id, status){
-  const list = loadPendingDeposits();
-  const dep = list.find(d=>d.id===id);
+async function decideDeposit(id, status){
+  const dep = latestPendingDeposits.find(d=>d.id===id);
   if (!dep) return;
-  dep.status = status;
-  dep.decidedAt = new Date().toISOString();
-  if (status === 'approved'){
-    const key = 'novayield_account_' + dep.userId;
-    try {
-      const raw = localStorage.getItem(key);
-      const acc = raw ? JSON.parse(raw) : { balance:0, activeStakes:[], activeTrades:[], closedTrades:[], verifState:'none' };
-      acc.balance = (acc.balance||0) + dep.amount;
-      localStorage.setItem(key, JSON.stringify(acc));
-      creditReferrerForDeposit(dep.userId, dep.amount);
-    } catch(e){ /* ignore */ }
-  }
-  savePendingDeposits(list);
-  renderDeposits();
-  renderUsers();
-  toast(status === 'approved' ? 'Депозит зачислен' : 'Депозит отклонён');
+  try {
+    if (status === 'approved'){
+      const accDoc = db.collection('accounts').doc(dep.userId);
+      await db.runTransaction(async (tx)=>{
+        const snap = await tx.get(accDoc);
+        const current = snap.exists ? (snap.data().balance||0) : (CONFIG.startingBalance||0);
+        tx.set(accDoc, { balance: current + dep.amount }, {merge:true});
+      });
+      await creditReferrerForDeposit(dep.userId, dep.amount);
+    }
+    await db.collection('pendingDeposits').doc(id).update({ status, decidedAt: new Date().toISOString() });
+    toast(status === 'approved' ? 'Депозит зачислен' : 'Депозит отклонён');
+  } catch(e){ toast('Ошибка сохранения'); }
 }
-setInterval(renderDeposits, 3000);
+db.collection('pendingDeposits').where('status','==','pending').onSnapshot(snapshot=>{
+  latestPendingDeposits = snapshot.docs.map(doc=>({ id: doc.id, ...doc.data() }));
+  renderDeposits();
+});
 
-renderPlans();
-fillReferral();
-fillPayments();
-fillTrading();
-fillGeneral();
-renderTexts();
-renderRequests();
-renderUsers();
-renderDeposits();
+async function boot(){
+  try {
+    CONFIG = await loadConfig();
+  } catch(e){
+    toast('Не удалось подключиться к базе данных');
+  }
+  renderPlans();
+  fillReferral();
+  fillPayments();
+  fillTrading();
+  fillGeneral();
+  renderTexts();
+  // renderRequests/renderUsers/renderDeposits are driven by the onSnapshot
+  // listeners above and will render themselves as soon as data arrives.
+}
+boot();
 </script>
 </body>
 </html>
