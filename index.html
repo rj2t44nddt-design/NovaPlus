@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Nova Yield — Demo</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -533,6 +535,17 @@
     color:var(--text-hi); font-size:19px; cursor:pointer; flex:none; line-height:1;
   }
   .market-detail-name{font-family:'Space Grotesk',sans-serif; font-size:15.5px; font-weight:600;}
+  .info-dot{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; border-radius:50%; background:var(--bg-card); border:1px solid var(--stroke);
+    color:var(--text-low); font-size:10px; font-style:italic; font-family:'JetBrains Mono',monospace;
+    cursor:pointer; vertical-align:middle; padding:0;
+  }
+  .info-dot:active{border-color:var(--accent-1); color:var(--accent-2);}
+  .data-info-popover{
+    display:none; font-size:11px; color:var(--text-low); line-height:1.5;
+    background:var(--bg-card); border:1px solid var(--stroke); border-radius:12px; padding:12px 14px; margin-top:10px;
+  }
   .market-detail-pair{font-size:11.5px; color:var(--text-low);}
   .market-detail-price{font-family:'Space Grotesk',sans-serif; font-size:29px; font-weight:700;}
   .market-detail-change{font-size:13px; font-weight:600; margin-top:4px;}
@@ -672,6 +685,11 @@
 </head>
 <body>
 <div class="app">
+  <div id="bootScreen" style="position:fixed; inset:0; z-index:999; background:#0A0A12; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
+    <div style="width:34px; height:34px; border-radius:50%; border:3px solid #232338; border-top-color:#8B6CFF; animation:spin .8s linear infinite;"></div>
+    <div style="color:#63617A; font-family:'Inter',sans-serif; font-size:12.5px;">Подключение…</div>
+  </div>
+
 
   <div class="topbar">
     <div class="brand">
@@ -845,7 +863,7 @@
           <button class="back-chev" onclick="closeMarketDetail()">‹</button>
           <div class="market-icon" id="mdIcon" style="width:34px; height:34px; border-radius:10px;"></div>
           <div class="market-detail-title">
-            <div class="market-detail-name"><span id="mdName">Bitcoin</span> <span class="source-tag demo" id="mdSourceTag">DEMO</span></div>
+            <div class="market-detail-name"><span id="mdName">Bitcoin</span> <span class="source-tag demo" id="mdSourceTag">DEMO</span> <button class="info-dot" onclick="toggleDataInfo()" aria-label="info">i</button></div>
             <div class="market-detail-pair" id="mdPair">BTC/USDT</div>
           </div>
         </div>
@@ -931,7 +949,7 @@
         </div>
         <div id="positionsList"></div>
 
-        <div class="demo-note-inline" data-i18n="marketsDemoNote">Демо-данные, сгенерированы случайно и не отражают реальные котировки.</div>
+        <div class="data-info-popover" id="dataInfoPopover" style="display:none;" data-i18n="marketsDemoNote">Крипта и золото (PAXG) — реальные цены Binance в реальном времени (WebSocket, посекундно). Форекс и USD/UAH — официальные курсы ЕЦБ/НБУ; сами эти институты публикуют их не чаще раза в день, поэтому секундные колебания на графике — небольшие технические колебания вокруг настоящего официального курса, а не отдельные официальные котировки. Товары и биржевые индексы убраны из списка — для них нет бесплатного официального источника без платного API-ключа.</div>
       </div>
     </section>
 
@@ -1541,23 +1559,30 @@ const DEFAULT_CONFIG = {
   textOverrides: {},
 };
 
-function loadConfig(){
+/* ---------- Firebase / Firestore: real shared cloud database, works across devices ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyB9lF0wP9-fx1qR-Tiz7XPJIx13GqcKsso",
+  authDomain: "novaplus-6145d.firebaseapp.com",
+  projectId: "novaplus-6145d",
+  storageBucket: "novaplus-6145d.firebasestorage.app",
+  messagingSenderId: "22781611991",
+  appId: "1:22781611991:web:1dc515371a35eb99038592",
+  measurementId: "G-K2YTXVJ0TY"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+async function loadConfig(){
   try {
-    const raw = localStorage.getItem('novayield_config');
-    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    const saved = JSON.parse(raw);
-    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), saved);
+    const snap = await db.collection('meta').doc('config').get();
+    if (!snap.exists) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), snap.data());
   } catch(e){
     return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
   }
 }
-const CONFIG = loadConfig();
-const plansData = CONFIG.plans;
-if (CONFIG.textOverrides){
-  Object.keys(CONFIG.textOverrides).forEach(l=>{
-    if (dict[l]) Object.assign(dict[l], CONFIG.textOverrides[l]);
-  });
-}
+let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); // replaced with real data once loadConfig() resolves in boot()
+let plansData = CONFIG.plans;
 
 /* ---------- Telegram identity: each real Telegram account gets its own isolated
    account (balance, stakes, trades, verification) instead of everyone sharing one
@@ -1586,17 +1611,17 @@ function freshAccount(){
     activeTrades: [],
     closedTrades: [],
     verifState: 'none',
+    blocked: false,
   };
 }
-function loadAccount(userId){
+async function loadAccount(userId){
   try {
-    const raw = localStorage.getItem('novayield_account_' + userId);
-    if (!raw) return freshAccount();
-    const saved = JSON.parse(raw);
-    return Object.assign(freshAccount(), saved);
+    const snap = await db.collection('accounts').doc(userId).get();
+    if (!snap.exists) return freshAccount();
+    return Object.assign(freshAccount(), snap.data());
   } catch(e){ return freshAccount(); }
 }
-function saveAccount(){
+async function saveAccount(){
   const data = {
     balance: availableBalance,
     activeStakes,
@@ -1605,11 +1630,12 @@ function saveAccount(){
     verifState,
     blocked: accountBlockedFlag,
   };
-  localStorage.setItem('novayield_account_' + currentUserId, JSON.stringify(data));
+  try { await db.collection('accounts').doc(currentUserId).set(data, {merge:true}); }
+  catch(e){ /* offline — Firestore will retry/queue automatically once back online */ }
 }
-const isNewAccount = !localStorage.getItem('novayield_account_' + currentUserId);
-const accountData = loadAccount(currentUserId);
-let accountBlockedFlag = accountData.blocked || false;
+let isNewAccount = false; // resolved in boot()
+let accountData = freshAccount(); // placeholder, replaced in boot()
+let accountBlockedFlag = false;
 
 /* ---------- referral tracking: who invited whom, and how much they earned ---------- */
 function getStartParam(){
@@ -1617,76 +1643,66 @@ function getStartParam(){
     return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param) || null;
   } catch(e){ return null; }
 }
-function loadReferrals(){
+async function loadReferrals(){
   try {
-    const raw = localStorage.getItem('novayield_referrals');
-    return raw ? JSON.parse(raw) : {};
+    const snap = await db.collection('referrals').get();
+    const map = {};
+    snap.forEach(doc=>{ map[doc.id] = doc.data(); });
+    return map;
   } catch(e){ return {}; }
 }
-function saveReferrals(map){
-  localStorage.setItem('novayield_referrals', JSON.stringify(map));
-}
-function registerReferralIfAny(){
+async function registerReferralIfAny(){
   const sp = getStartParam();
   if (!sp || !sp.startsWith('ref_')) return;
   const referrerId = 'tg_' + sp.slice(4);
   if (referrerId === currentUserId) return; // no self-referral
-  const refs = loadReferrals();
-  if (refs[currentUserId]) return; // already registered
-  refs[currentUserId] = {
-    referrerId,
-    refereeDisplayName: currentUserDisplayName,
-    joinedAt: new Date().toISOString(),
-    totalDeposited: 0,
-    bonusEarned: 0,
-  };
-  saveReferrals(refs);
-}
-if (isNewAccount) registerReferralIfAny();
-
-// Called whenever this user tops up their balance — credits their referrer (if any) a % of the deposit
-function creditReferrerForDeposit(depositUsdt){
-  if (!depositUsdt || depositUsdt <= 0) return;
-  const refs = loadReferrals();
-  const myEntry = refs[currentUserId];
-  if (!myEntry) return; // this account wasn't referred by anyone
-  const referrerId = myEntry.referrerId;
-  const referrerInvitedCount = Object.values(refs).filter(r=>r.referrerId===referrerId).length;
-  const rate = referralRateFor(referrerInvitedCount);
-  const bonus = depositUsdt * (rate/100);
-  myEntry.totalDeposited = (myEntry.totalDeposited||0) + depositUsdt;
-  myEntry.bonusEarned = (myEntry.bonusEarned||0) + bonus;
-  saveReferrals(refs);
-  // credit the referrer's stored balance directly, even if they're offline right now
-  const key = 'novayield_account_' + referrerId;
   try {
-    const raw = localStorage.getItem(key);
-    const acc = raw ? JSON.parse(raw) : freshAccount();
-    acc.balance = (acc.balance||0) + bonus;
-    localStorage.setItem(key, JSON.stringify(acc));
-    if (referrerId === currentUserId){ availableBalance = acc.balance; } // reflect immediately if it's somehow the same session
+    const ref = db.collection('referrals').doc(currentUserId);
+    const existing = await ref.get();
+    if (existing.exists) return; // already registered
+    await ref.set({
+      referrerId,
+      refereeDisplayName: currentUserDisplayName,
+      joinedAt: new Date().toISOString(),
+      totalDeposited: 0,
+      bonusEarned: 0,
+    });
   } catch(e){ /* ignore */ }
 }
-function myReferrals(){
-  const refs = loadReferrals();
+
+// Called whenever this user tops up their balance — credits their referrer (if any) a % of the deposit
+async function creditReferrerForDeposit(depositUsdt){
+  if (!depositUsdt || depositUsdt <= 0) return;
+  try {
+    const refs = await loadReferrals();
+    const myEntry = refs[currentUserId];
+    if (!myEntry) return; // this account wasn't referred by anyone
+    const referrerId = myEntry.referrerId;
+    const referrerInvitedCount = Object.values(refs).filter(r=>r.referrerId===referrerId).length;
+    const rate = referralRateFor(referrerInvitedCount);
+    const bonus = depositUsdt * (rate/100);
+    await db.collection('referrals').doc(currentUserId).update({
+      totalDeposited: (myEntry.totalDeposited||0) + depositUsdt,
+      bonusEarned: (myEntry.bonusEarned||0) + bonus,
+    });
+    // credit the referrer's stored balance directly, even if they're offline right now
+    const refDoc = db.collection('accounts').doc(referrerId);
+    await db.runTransaction(async (tx)=>{
+      const snap = await tx.get(refDoc);
+      const current = snap.exists ? (snap.data().balance||0) : CONFIG.startingBalance;
+      tx.set(refDoc, { balance: current + bonus }, {merge:true});
+    });
+  } catch(e){ /* ignore */ }
+}
+async function myReferrals(){
+  const refs = await loadReferrals();
   return Object.values(refs).filter(r=>r.referrerId===currentUserId);
 }
+let cachedMyReferrals = [];
 
 /* ---------- deposits go to a moderation queue instead of crediting instantly ---------- */
-let depositIdSeq = Date.now();
-function loadPendingDeposits(){
-  try {
-    const raw = localStorage.getItem('novayield_pending_deposits');
-    return raw ? JSON.parse(raw) : [];
-  } catch(e){ return []; }
-}
-function savePendingDeposits(list){
-  localStorage.setItem('novayield_pending_deposits', JSON.stringify(list));
-}
-function submitPendingDeposit(amountUsdt, method, extra){
-  const list = loadPendingDeposits();
+async function submitPendingDeposit(amountUsdt, method, extra){
   const entry = {
-    id: depositIdSeq++,
     userId: currentUserId,
     displayName: currentUserDisplayName,
     amount: amountUsdt,
@@ -1695,46 +1711,22 @@ function submitPendingDeposit(amountUsdt, method, extra){
     createdAt: new Date().toISOString(),
     status: 'pending',
   };
-  list.push(entry);
-  savePendingDeposits(list);
+  try { await db.collection('pendingDeposits').add(entry); } catch(e){ /* ignore */ }
   return entry;
 }
 let lastKnownDepositStatuses = {};
-function pollMyDeposits(){
-  const list = loadPendingDeposits();
-  list.filter(d=>d.userId===currentUserId).forEach(d=>{
-    const prev = lastKnownDepositStatuses[d.id];
-    if (prev === undefined){ lastKnownDepositStatuses[d.id] = d.status; return; }
+function handleDepositSnapshot(snapshot){
+  snapshot.docChanges().forEach(change=>{
+    const d = change.doc.data();
+    const id = change.doc.id;
+    const prev = lastKnownDepositStatuses[id];
+    if (prev === undefined){ lastKnownDepositStatuses[id] = d.status; return; }
     if (prev !== d.status){
-      lastKnownDepositStatuses[d.id] = d.status;
+      lastKnownDepositStatuses[id] = d.status;
       if (d.status === 'approved') toast(t('depositApprovedToast') + ' +' + fmt(d.amount) + ' USDT');
       if (d.status === 'rejected') toast(t('depositRejectedToast'));
     }
   });
-}
-// Detects balance/blocked-state changes made from the admin panel (e.g. manual balance
-// edit, deposit approval, block toggle) and refreshes this session without reloading.
-function pollOwnAccount(){
-  try {
-    const raw = localStorage.getItem('novayield_account_' + currentUserId);
-    if (!raw) return;
-    const acc = JSON.parse(raw);
-    if (typeof acc.balance === 'number' && acc.balance !== availableBalance){
-      availableBalance = acc.balance;
-      const el = document.getElementById('balanceMain');
-      if (el) el.textContent = fmt(availableBalance);
-    }
-    if (acc.blocked && !isBlockedShown) showBlockedOverlay();
-    if (!acc.blocked && isBlockedShown) hideBlockedOverlay();
-    accountBlockedFlag = !!acc.blocked;
-    if (acc.verifState && acc.verifState !== verifState){
-      const wasPending = verifState === 'pending';
-      verifState = acc.verifState;
-      renderVerifStatus();
-      if (wasPending && verifState === 'verified') toast(t('verifApprovedToast'));
-      if (wasPending && verifState === 'rejected') toast(t('verifRejectedToast'));
-    }
-  } catch(e){ /* ignore */ }
 }
 let isBlockedShown = false;
 function showBlockedOverlay(){
@@ -1747,28 +1739,41 @@ function hideBlockedOverlay(){
   const el = document.getElementById('blockedOverlay');
   if (el) el.style.display = 'none';
 }
+// Reacts live to changes made from the admin panel (balance edit, deposit approval,
+// block toggle, verification decision) — no reload needed, works across devices.
+function handleAccountSnapshot(doc){
+  if (!doc.exists) return;
+  const acc = doc.data();
+  if (typeof acc.balance === 'number' && acc.balance !== availableBalance){
+    availableBalance = acc.balance;
+    const el = document.getElementById('balanceMain');
+    if (el) el.textContent = fmt(availableBalance);
+  }
+  if (acc.blocked && !isBlockedShown) showBlockedOverlay();
+  if (!acc.blocked && isBlockedShown) hideBlockedOverlay();
+  accountBlockedFlag = !!acc.blocked;
+  if (acc.verifState && acc.verifState !== verifState){
+    const wasPending = verifState === 'pending';
+    verifState = acc.verifState;
+    renderVerifStatus();
+    if (wasPending && verifState === 'verified') toast(t('verifApprovedToast'));
+    if (wasPending && verifState === 'rejected') toast(t('verifRejectedToast'));
+  }
+}
 
 /* ---------- referral program access requests, keyed per Telegram user ---------- */
-function loadReferralRequests(){
+async function loadReferralRequest(){
   try {
-    const raw = localStorage.getItem('novayield_referral_requests');
-    return raw ? JSON.parse(raw) : {};
-  } catch(e){ return {}; }
+    const snap = await db.collection('referralRequests').doc(currentUserId).get();
+    return snap.exists ? snap.data() : { status: 'none' };
+  } catch(e){ return { status: 'none' }; }
 }
-function saveReferralRequests(map){
-  localStorage.setItem('novayield_referral_requests', JSON.stringify(map));
+async function saveReferralRequest(req){
+  try { await db.collection('referralRequests').doc(currentUserId).set(req, {merge:true}); }
+  catch(e){ /* ignore */ }
 }
-function loadReferralRequest(){
-  const map = loadReferralRequests();
-  return map[currentUserId] || { status: 'none' };
-}
-function saveReferralRequest(req){
-  const map = loadReferralRequests();
-  map[currentUserId] = req;
-  saveReferralRequests(map);
-}
-let referralRequest = loadReferralRequest();
-let lastKnownRefStatus = referralRequest.status;
+let referralRequest = { status: 'none' }; // placeholder, replaced in boot()
+let lastKnownRefStatus = 'none';
 function submitReferralRequest(){
   referralRequest = { status: 'pending', user: currentUserDisplayName, requestedAt: new Date().toISOString() };
   saveReferralRequest(referralRequest);
@@ -1785,8 +1790,8 @@ function renderReferralState(){
   const supportLine = document.getElementById('refSupportLine');
   if (supportLine) supportLine.innerHTML = t('refSupportQuestion') + ' <a class="support-link" href="https://t.me/novaplus_support" target="_blank" rel="noopener">@novaplus_support</a>';
 }
-function pollReferralRequest(){
-  const fresh = loadReferralRequest();
+function handleReferralRequestSnapshot(doc){
+  const fresh = doc.exists ? doc.data() : { status: 'none' };
   if (fresh.status !== lastKnownRefStatus){
     referralRequest = fresh;
     lastKnownRefStatus = fresh.status;
@@ -1794,10 +1799,6 @@ function pollReferralRequest(){
     if (fresh.status === 'approved') toast(t('refApprovedToast'));
   }
 }
-setInterval(pollReferralRequest, 2000);
-setInterval(pollMyDeposits, 2000);
-setInterval(pollOwnAccount, 2000);
-pollOwnAccount();
 
 const inviteesData = [];
 
@@ -1825,7 +1826,7 @@ function render(){
   });
   document.getElementById('settingsLangVal').textContent = dict[lang].langNames[lang];
   document.getElementById('settingsAccountVal').textContent = currentUserDisplayName;
-  document.getElementById('refRateNum').textContent = referralRateFor(myReferrals().length) + '%';
+  document.getElementById('refRateNum').textContent = referralRateFor(cachedMyReferrals.length) + '%';
   document.getElementById('refLink').value = personalizedRefLink();
   document.getElementById('balanceMain').textContent = fmt(availableBalance);
   document.querySelectorAll('.brand .word').forEach(el=>{
@@ -1868,7 +1869,7 @@ function render(){
   // invitees (real referrals, tracked via the ?start=ref_<id> deep link)
   const list = document.getElementById('inviteesList');
   list.innerHTML = '';
-  const myRefs = myReferrals();
+  const myRefs = cachedMyReferrals;
   const totalEarned = myRefs.reduce((sum, r)=> sum + (r.bonusEarned||0), 0);
   myRefs
     .slice()
@@ -2816,12 +2817,14 @@ async function fetchUahLive(){
     updateLiveDisplays();
   } catch(e){ /* stays not-yet-live until next attempt */ }
 }
+const FOREX_PIP_SIZE = { eur:0.0001, gbp:0.0001, aud:0.0001, nzd:0.0001, chf:0.0001, cad:0.0001, cny:0.0001, jpy:0.01, try:0.01, uah:0.01 };
 function tickForexJitter(){
   Object.keys(forexAnchors).forEach(id=>{
     const m = marketsData.find(x=>x.id===id);
     if (!m || !m.live) return;
     const anchor = forexAnchors[id];
-    const jitter = (Math.random()-0.5) * anchor * 0.00012; // tiny wobble around the real rate
+    const pip = FOREX_PIP_SIZE[id] || anchor*0.0001;
+    const jitter = (Math.random()-0.5) * pip * 6; // ± up to ~3 pips, visible every tick
     m.price = anchor + jitter;
     m.change = ((m.price - m.dayOpen)/m.dayOpen)*100;
   });
@@ -3137,7 +3140,13 @@ function resetChartZoom(){
   scroll.addEventListener('touchend', ()=>{ pinchStartDist = null; });
 })();
 
+function toggleDataInfo(){
+  const el = document.getElementById('dataInfoPopover');
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 function openMarket(m){
+  document.getElementById('dataInfoPopover').style.display = 'none';
   currentMarket = m;
   currentTf = '1D';
   chartZoomLevel = 1;
@@ -3365,8 +3374,53 @@ try {
   }
 } catch(e){}
 
-render();
-if (accountBlockedFlag) showBlockedOverlay();
+async function boot(){
+  const bootScreen = document.getElementById('bootScreen');
+  try {
+    CONFIG = await loadConfig();
+    plansData = CONFIG.plans;
+    if (CONFIG.textOverrides){
+      Object.keys(CONFIG.textOverrides).forEach(l=>{
+        if (dict[l]) Object.assign(dict[l], CONFIG.textOverrides[l]);
+      });
+    }
+    lang = CONFIG.defaultLang || 'ru';
+
+    const snap = await db.collection('accounts').doc(currentUserId).get();
+    isNewAccount = !snap.exists;
+    accountData = isNewAccount ? freshAccount() : Object.assign(freshAccount(), snap.data());
+    accountBlockedFlag = accountData.blocked || false;
+
+    availableBalance = accountData.balance;
+    activeStakes = (accountData.activeStakes||[]).map(s=>({...s, unlock: new Date(s.unlock)}));
+    activeTrades = accountData.activeTrades || [];
+    closedTrades = (accountData.closedTrades||[]).map(c=>({...c, closedAt: new Date(c.closedAt)}));
+    verifState = accountData.verifState || 'none';
+
+    if (isNewAccount) await registerReferralIfAny();
+    cachedMyReferrals = await myReferrals();
+    referralRequest = await loadReferralRequest();
+    lastKnownRefStatus = referralRequest.status;
+
+    // real-time listeners — reflect admin-panel changes instantly, from any device
+    db.collection('accounts').doc(currentUserId).onSnapshot(handleAccountSnapshot);
+    db.collection('referralRequests').doc(currentUserId).onSnapshot(handleReferralRequestSnapshot);
+    db.collection('pendingDeposits').where('userId','==',currentUserId).onSnapshot(handleDepositSnapshot);
+    db.collection('referrals').where('referrerId','==',currentUserId).onSnapshot(snapshot=>{
+      cachedMyReferrals = snapshot.docs.map(d=>d.data());
+      render();
+    });
+
+    render();
+    if (accountBlockedFlag) showBlockedOverlay();
+  } catch(e){
+    console.error('NovaPlus boot failed:', e);
+    if (bootScreen) bootScreen.innerHTML = '<div style="padding:20px;text-align:center;color:#FF6B6B;font-family:sans-serif;font-size:13px;">Не удалось подключиться к базе данных.<br>Проверьте интернет-соединение и обновите страницу.</div>';
+    return;
+  }
+  if (bootScreen) bootScreen.style.display = 'none';
+}
+boot();
 </script>
 </body>
 </html>
