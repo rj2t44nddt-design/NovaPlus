@@ -1385,6 +1385,12 @@
 </div>
 
 <script>
+window.addEventListener('error', function(e){
+  const bs = document.getElementById('bootScreen');
+  if (bs && bs.style.display !== 'none'){
+    bs.innerHTML = '<div style="padding:20px;text-align:center;color:#FF6B6B;font-family:sans-serif;font-size:12px;line-height:1.6;">Ошибка скрипта:<br><b>' + (e && e.message ? e.message : 'unknown') + '</b><br>' + (e && e.filename ? (e.filename.split('/').pop() + ':' + e.lineno) : '') + '</div>';
+  }
+});
 const dict = {
   ru:{
     demoText:"Демо-версия интерфейса. Данные ниже — тестовые, реальных начислений и выплат нет.",
@@ -3410,12 +3416,17 @@ async function boot(){
       cachedMyReferrals = snapshot.docs.map(d=>d.data());
       render();
     });
-
+  } catch(e){
+    console.error('NovaPlus boot (data load) failed:', e);
+    if (bootScreen) bootScreen.innerHTML = '<div style="padding:20px;text-align:center;color:#FF6B6B;font-family:sans-serif;font-size:12px;line-height:1.6;">Ошибка загрузки данных:<br><b>' + (e && e.message ? e.message : e) + '</b><br><br>Проверьте интернет-соединение и обновите страницу.</div>';
+    return;
+  }
+  try {
     render();
     if (accountBlockedFlag) showBlockedOverlay();
   } catch(e){
-    console.error('NovaPlus boot failed:', e);
-    if (bootScreen) bootScreen.innerHTML = '<div style="padding:20px;text-align:center;color:#FF6B6B;font-family:sans-serif;font-size:13px;">Не удалось подключиться к базе данных.<br>Проверьте интернет-соединение и обновите страницу.</div>';
+    console.error('NovaPlus render failed:', e);
+    if (bootScreen) bootScreen.innerHTML = '<div style="padding:20px;text-align:center;color:#FF6B6B;font-family:sans-serif;font-size:12px;line-height:1.6;">Ошибка отображения интерфейса:<br><b>' + (e && e.message ? e.message : e) + '</b></div>';
     return;
   }
   if (bootScreen) bootScreen.style.display = 'none';
