@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NovaYield — Admin</title>
+<title>NovaPlus — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -174,7 +174,7 @@
 <body>
 
 <aside>
-  <div class="brand"><div class="mark">N</div><div class="word">NovaYield<br><span style="color:var(--text-low); font-weight:400;">Admin</span></div></div>
+  <div class="brand"><div class="mark">N</div><div class="word">NovaPlus<br><span style="color:var(--text-low); font-weight:400;">Admin</span></div></div>
   <div class="navitem active" data-panel="plans">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg>
     Тарифы стейкинга
@@ -186,6 +186,10 @@
   <div class="navitem" data-panel="refrequests">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
     Заявки на рефералку<span class="req-badge" id="reqBadge" style="display:none;">0</span>
+  </div>
+  <div class="navitem" data-panel="deposits">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v14M6 10l6 6 6-6"/><path d="M4 20h16"/></svg>
+    Депозиты на проверке<span class="req-badge" id="depBadge" style="display:none;">0</span>
   </div>
   <div class="navitem" data-panel="payments">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/></svg>
@@ -399,25 +403,36 @@
     </div>
   </section>
 
+  <!-- DEPOSITS -->
+  <section class="panel" id="panel-deposits">
+    <div class="page-head">
+      <h1>Депозиты на проверке</h1>
+      <p>Пользователь нажал «Я отправил(а)» — здесь вы подтверждаете, что деньги реально пришли, и зачисляете вручную</p>
+    </div>
+    <div class="card">
+      <div id="depEmpty" class="hint" style="display:none;">Нет депозитов на проверке</div>
+      <table class="users-table" id="depTable" style="display:none;">
+        <thead><tr><th>Пользователь</th><th>Сумма, USDT</th><th>Способ</th><th>Подан</th><th></th></tr></thead>
+        <tbody id="depBody"></tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- USERS -->
   <section class="panel" id="panel-users">
     <div class="page-head">
       <h1>Пользователи</h1>
-      <p>Список участников платформы</p>
+      <p>Аккаунты, которые открывали мини-апп на этом устройстве</p>
     </div>
     <div class="demo-note">
       <span>●</span>
-      <span>Демо-данные. Без бэкенда список нельзя связать с реальными пользователями мини-аппа — здесь только пример того, как будет выглядеть таблица.</span>
+      <span>Без настоящего бэкенда список видит только аккаунты, зашедшие через этот же браузер/устройство — это ограничение локального хранилища, а не платформы в целом. Для полноценного списка всех пользователей нужен сервер с базой данных.</span>
     </div>
     <div class="card">
-      <table class="users-table">
-        <thead><tr><th>Пользователь</th><th>Баланс, USDT</th><th>Рефералов</th><th>Статус</th></tr></thead>
-        <tbody>
-          <tr><td>@mikhail_p</td><td>28 969.91</td><td>7</td><td><span class="status-chip active">Активен</span></td></tr>
-          <tr><td>@olena_k</td><td>1 200.00</td><td>0</td><td><span class="status-chip active">Активен</span></td></tr>
-          <tr><td>@dmitry_v</td><td>840.00</td><td>2</td><td><span class="status-chip pending">Ожидает</span></td></tr>
-          <tr><td>@anna_s</td><td>2 500.00</td><td>1</td><td><span class="status-chip active">Активен</span></td></tr>
-        </tbody>
+      <div id="usersEmpty" class="hint" style="display:none;">Пока никто не открывал мини-апп на этом устройстве</div>
+      <table class="users-table" id="usersTable" style="display:none;">
+        <thead><tr><th>Пользователь</th><th>Баланс, USDT</th><th>Пригласил</th><th>Заработал на рефералке</th><th>Верификация</th><th></th></tr></thead>
+        <tbody id="usersBody"></tbody>
       </table>
     </div>
   </section>
@@ -438,17 +453,17 @@ const DEFAULT_CONFIG = {
     {min:10, max:19, rate:20},
     {min:20, max:29, rate:30},
     {min:30, max:49, rate:40},
-    {min:50, max:null, rate:50},
+    {min:50, max:null, rate:65},
   ],
-  refLink: "t.me/novayield_bot?start=ref_8841kf",
+  refLink: "t.me/novaplus_bot?start=ref_8841kf",
   cryptoAddresses: { TRC20:"TXk9s...4fQ2m", ERC20:"0x8f2a...91cE", BEP20:"0x8f2a...91cE" },
   cardNumber: "4441 1149 9911 2233",
   cardHolder: "IVAN PETRENKO",
   uahMin: 2250,
   uahMax: 29999,
   uahRate: 45,
-  brandName: "NovaYield",
-  startingBalance: 28969.91,
+  brandName: "NovaPlus",
+  startingBalance: 0,
   withdrawFee: 1.0,
   tradingSpreadPct: 0.015,
   maxLeverage: 100,
@@ -608,7 +623,7 @@ function fillGeneral(){
   document.getElementById('cfgDefaultLang').value = CONFIG.defaultLang;
 }
 function saveGeneral(){
-  CONFIG.brandName = document.getElementById('cfgBrandName').value.trim() || 'NovaYield';
+  CONFIG.brandName = document.getElementById('cfgBrandName').value.trim() || 'NovaPlus';
   CONFIG.startingBalance = parseFloat(document.getElementById('cfgStartingBalance').value) || 0;
   CONFIG.defaultLang = document.getElementById('cfgDefaultLang').value;
   saveConfig(CONFIG);
@@ -699,28 +714,29 @@ function toast(msg){
   toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
 }
 
-/* ---------- referral program requests ---------- */
-function loadReferralRequest(){
+/* ---------- referral program requests (one entry per Telegram user) ---------- */
+function loadReferralRequests(){
   try {
-    const raw = localStorage.getItem('novayield_referral_request');
-    return raw ? JSON.parse(raw) : { status: 'none' };
-  } catch(e){ return { status: 'none' }; }
+    const raw = localStorage.getItem('novayield_referral_requests');
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){ return {}; }
 }
-function saveReferralRequest(req){
-  localStorage.setItem('novayield_referral_request', JSON.stringify(req));
+function saveReferralRequests(map){
+  localStorage.setItem('novayield_referral_requests', JSON.stringify(map));
 }
 function fmtDate(iso){
   if (!iso) return '—';
   return new Date(iso).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 function renderRequests(){
-  const req = loadReferralRequest();
+  const map = loadReferralRequests();
+  const userIds = Object.keys(map);
   const empty = document.getElementById('reqEmpty');
   const table = document.getElementById('reqTable');
   const body = document.getElementById('reqBody');
   const badge = document.getElementById('reqBadge');
 
-  if (!req || req.status === 'none'){
+  if (userIds.length === 0){
     empty.style.display = 'block';
     table.style.display = 'none';
     badge.style.display = 'none';
@@ -728,35 +744,239 @@ function renderRequests(){
   }
   empty.style.display = 'none';
   table.style.display = 'table';
-  badge.style.display = req.status === 'pending' ? 'inline-block' : 'none';
-  badge.textContent = req.status === 'pending' ? '1' : '0';
+  const pendingCount = userIds.filter(id=>map[id].status === 'pending').length;
+  badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+  badge.textContent = pendingCount;
 
-  const statusLabel = { pending:'На рассмотрении', approved:'Одобрена', rejected:'Отклонена' }[req.status] || req.status;
-  const statusClass = { pending:'pending', approved:'active', rejected:'rejected' }[req.status] || '';
+  const statusLabel = { pending:'На рассмотрении', approved:'Одобрена', rejected:'Отклонена' };
+  const statusClass = { pending:'pending', approved:'active', rejected:'rejected' };
 
-  body.innerHTML = `
-    <tr>
-      <td>${req.user || '@mikhail_p'}</td>
-      <td>${fmtDate(req.requestedAt)}</td>
-      <td><span class="status-chip ${statusClass}">${statusLabel}</span></td>
-      <td>
-        <div class="req-actions">
-          <button class="approve" onclick="setReqStatus('approved')">Одобрить</button>
-          <button class="reject" onclick="setReqStatus('rejected')">Отклонить</button>
-        </div>
-      </td>
-    </tr>
-  `;
+  // most recently requested first
+  userIds.sort((a,b)=> new Date(map[b].requestedAt||0) - new Date(map[a].requestedAt||0));
+
+  body.innerHTML = userIds.map(id=>{
+    const req = map[id];
+    return `
+      <tr>
+        <td>${req.user || id}</td>
+        <td>${fmtDate(req.requestedAt)}</td>
+        <td><span class="status-chip ${statusClass[req.status]||''}">${statusLabel[req.status]||req.status}</span></td>
+        <td>
+          <div class="req-actions">
+            <button class="approve" onclick="setReqStatus('${id}','approved')">Одобрить</button>
+            <button class="reject" onclick="setReqStatus('${id}','rejected')">Отклонить</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
-function setReqStatus(status){
-  const req = loadReferralRequest();
-  req.status = status;
-  req.decidedAt = new Date().toISOString();
-  saveReferralRequest(req);
+function setReqStatus(userId, status){
+  const map = loadReferralRequests();
+  if (!map[userId]) return;
+  map[userId].status = status;
+  map[userId].decidedAt = new Date().toISOString();
+  saveReferralRequests(map);
   renderRequests();
   toast(status === 'approved' ? 'Заявка одобрена' : 'Заявка отклонена');
 }
 setInterval(renderRequests, 3000);
+
+/* ---------- real accounts found on this device (localStorage-scoped) ---------- */
+function loadReferralsMap(){
+  try {
+    const raw = localStorage.getItem('novayield_referrals');
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){ return {}; }
+}
+function renderUsers(){
+  const empty = document.getElementById('usersEmpty');
+  const table = document.getElementById('usersTable');
+  const body = document.getElementById('usersBody');
+  const rows = [];
+  for (let i=0; i<localStorage.length; i++){
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('novayield_account_')) continue;
+    const userId = key.replace('novayield_account_', '');
+    try {
+      const acc = JSON.parse(localStorage.getItem(key));
+      rows.push({ userId, acc });
+    } catch(e){ /* skip malformed entry */ }
+  }
+  if (rows.length === 0){
+    empty.style.display = 'block';
+    table.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  const verifLabel = { none:'Не пройдена', pending:'На проверке', verified:'Подтверждена', rejected:'Отклонена' };
+  const verifClass = { none:'', pending:'pending', verified:'active', rejected:'rejected' };
+  const refsMap = loadReferralsMap();
+  const refEntries = Object.values(refsMap);
+  body.innerHTML = rows.map(({userId, acc})=>{
+    const invited = refEntries.filter(r=>r.referrerId===userId);
+    const earned = invited.reduce((s,r)=> s + (r.bonusEarned||0), 0);
+    const verifCell = acc.verifState === 'pending'
+      ? `<div class="req-actions">
+           <button class="approve" onclick="setUserVerif('${userId}','verified')">Подтвердить</button>
+           <button class="reject" onclick="setUserVerif('${userId}','rejected')">Отклонить</button>
+         </div>`
+      : `<span class="status-chip ${verifClass[acc.verifState]||''}">${verifLabel[acc.verifState]||acc.verifState}</span>`;
+    return `
+    <tr>
+      <td>${userId}</td>
+      <td>${(acc.balance||0).toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+      <td>${invited.length}</td>
+      <td>${earned.toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+      <td>${verifCell}</td>
+      <td>
+        <div class="req-actions">
+          <button class="approve" onclick="editUserBalance('${userId}')">Баланс</button>
+          <button class="${acc.blocked ? 'approve' : 'reject'}" onclick="toggleBlockUser('${userId}')">${acc.blocked ? 'Разблок.' : 'Заблок.'}</button>
+        </div>
+      </td>
+    </tr>
+  `;
+  }).join('');
+}
+function setUserVerif(userId, status){
+  const key = 'novayield_account_' + userId;
+  let acc;
+  try { acc = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){ acc = {}; }
+  acc.verifState = status;
+  localStorage.setItem(key, JSON.stringify(acc));
+  renderUsers();
+  toast(status === 'verified' ? 'Верификация подтверждена' : 'Верификация отклонена');
+}
+function editUserBalance(userId){
+  const key = 'novayield_account_' + userId;
+  let acc;
+  try { acc = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){ acc = {}; }
+  const current = acc.balance || 0;
+  const input = prompt('Новый баланс для ' + userId + ' (USDT):', current.toFixed(2));
+  if (input === null) return;
+  const val = parseFloat(input.replace(',', '.'));
+  if (isNaN(val) || val < 0){ toast('Некорректная сумма'); return; }
+  acc.balance = val;
+  localStorage.setItem(key, JSON.stringify(acc));
+  renderUsers();
+  toast('Баланс обновлён');
+}
+function toggleBlockUser(userId){
+  const key = 'novayield_account_' + userId;
+  let acc;
+  try { acc = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){ acc = {}; }
+  acc.blocked = !acc.blocked;
+  localStorage.setItem(key, JSON.stringify(acc));
+  renderUsers();
+  toast(acc.blocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован');
+}
+setInterval(renderUsers, 3000);
+
+/* ---------- pending deposits: user says "I sent it", admin verifies and credits manually ---------- */
+function loadPendingDeposits(){
+  try {
+    const raw = localStorage.getItem('novayield_pending_deposits');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
+}
+function savePendingDeposits(list){
+  localStorage.setItem('novayield_pending_deposits', JSON.stringify(list));
+}
+function loadReferrals(){
+  try {
+    const raw = localStorage.getItem('novayield_referrals');
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){ return {}; }
+}
+function saveReferrals(map){
+  localStorage.setItem('novayield_referrals', JSON.stringify(map));
+}
+function referralRateFor(count){
+  if (count < 1) return 0;
+  const tiers = CONFIG.referralTiers;
+  for (const tr of tiers){
+    if (count >= tr.min && (tr.max === null || count <= tr.max)) return tr.rate;
+  }
+  return tiers[tiers.length-1].rate;
+}
+function creditReferrerForDeposit(depositorUserId, depositUsdt){
+  const refs = loadReferrals();
+  const entry = refs[depositorUserId];
+  if (!entry) return;
+  const referrerId = entry.referrerId;
+  const referrerInvitedCount = Object.values(refs).filter(r=>r.referrerId===referrerId).length;
+  const rate = referralRateFor(referrerInvitedCount);
+  const bonus = depositUsdt * (rate/100);
+  entry.totalDeposited = (entry.totalDeposited||0) + depositUsdt;
+  entry.bonusEarned = (entry.bonusEarned||0) + bonus;
+  saveReferrals(refs);
+  const key = 'novayield_account_' + referrerId;
+  try {
+    const raw = localStorage.getItem(key);
+    const acc = raw ? JSON.parse(raw) : { balance:0, activeStakes:[], activeTrades:[], closedTrades:[], verifState:'none' };
+    acc.balance = (acc.balance||0) + bonus;
+    localStorage.setItem(key, JSON.stringify(acc));
+  } catch(e){ /* ignore */ }
+}
+function renderDeposits(){
+  const empty = document.getElementById('depEmpty');
+  const table = document.getElementById('depTable');
+  const body = document.getElementById('depBody');
+  const badge = document.getElementById('depBadge');
+  const all = loadPendingDeposits();
+  const pending = all.filter(d=>d.status==='pending');
+
+  badge.style.display = pending.length > 0 ? 'inline-block' : 'none';
+  badge.textContent = pending.length;
+
+  if (pending.length === 0){
+    empty.style.display = 'block';
+    table.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  pending.sort((a,b)=> new Date(a.createdAt) - new Date(b.createdAt));
+  const methodLabel = { crypto:'USDT', card:'Карта' };
+  body.innerHTML = pending.map(d=>`
+    <tr>
+      <td>${d.displayName || d.userId}</td>
+      <td>${d.amount.toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+      <td>${methodLabel[d.method]||d.method}${d.extra ? ' · '+d.extra : ''}</td>
+      <td>${fmtDate(d.createdAt)}</td>
+      <td>
+        <div class="req-actions">
+          <button class="approve" onclick="decideDeposit(${d.id}, 'approved')">Одобрить</button>
+          <button class="reject" onclick="decideDeposit(${d.id}, 'rejected')">Отклонить</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+function decideDeposit(id, status){
+  const list = loadPendingDeposits();
+  const dep = list.find(d=>d.id===id);
+  if (!dep) return;
+  dep.status = status;
+  dep.decidedAt = new Date().toISOString();
+  if (status === 'approved'){
+    const key = 'novayield_account_' + dep.userId;
+    try {
+      const raw = localStorage.getItem(key);
+      const acc = raw ? JSON.parse(raw) : { balance:0, activeStakes:[], activeTrades:[], closedTrades:[], verifState:'none' };
+      acc.balance = (acc.balance||0) + dep.amount;
+      localStorage.setItem(key, JSON.stringify(acc));
+      creditReferrerForDeposit(dep.userId, dep.amount);
+    } catch(e){ /* ignore */ }
+  }
+  savePendingDeposits(list);
+  renderDeposits();
+  renderUsers();
+  toast(status === 'approved' ? 'Депозит зачислен' : 'Депозит отклонён');
+}
+setInterval(renderDeposits, 3000);
 
 renderPlans();
 fillReferral();
@@ -765,6 +985,8 @@ fillTrading();
 fillGeneral();
 renderTexts();
 renderRequests();
+renderUsers();
+renderDeposits();
 </script>
 </body>
 </html>
