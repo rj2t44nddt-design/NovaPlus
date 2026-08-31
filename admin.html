@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaYield — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A12; --bg-elev:#131320; --bg-card:#171726; --stroke:#232338;
+    --accent-1:#8B6CFF; --accent-2:#B99CFF; --accent-glow: rgba(139,108,255,.35);
+    --text-hi:#F4F3FA; --text-mid:#A6A4B8; --text-low:#63617A;
+    --good:#3FDDA6; --warn:#FFB454; --bad:#FF6B6B; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--text-hi);font-family:'Inter',sans-serif;}
+  body{display:flex; min-height:100vh;}
+
+  /* ---------- sidebar ---------- */
+  aside{
+    width:230px; flex:none; background:var(--bg-elev); border-right:1px solid var(--stroke);
+    padding:22px 16px; display:flex; flex-direction:column; min-height:100vh;
+    position:sticky; top:0;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:0 6px 26px;}
+  .brand .mark{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(140deg,var(--accent-1),var(--accent-2));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:#fff;
+  }
+  .brand .word{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;}
+  .navitem{
+    display:flex; align-items:center; gap:11px; padding:11px 12px; border-radius:11px;
+    color:var(--text-mid); font-size:13.5px; font-weight:500; cursor:pointer; margin-bottom:2px;
+    transition:.15s;
+  }
+  .navitem svg{width:18px; height:18px; flex:none;}
+  .navitem:hover{background:rgba(255,255,255,.03); color:var(--text-hi);}
+  .navitem.active{background:rgba(139,108,255,.12); color:var(--accent-2);}
+  .req-badge{
+    background:var(--warn); color:#0A0A12; font-size:10px; font-weight:700; padding:1px 6px;
+    border-radius:999px; margin-left:auto;
+  }
+  .sidebar-foot{margin-top:auto; padding:12px 6px; font-size:11px; color:var(--text-low); line-height:1.5;}
+
+  /* ---------- main ---------- */
+  main{flex:1; padding:32px 40px; max-width:920px;}
+  .page-head{margin-bottom:26px;}
+  .page-head h1{font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:600; margin:0 0 6px;}
+  .page-head p{font-size:13px; color:var(--text-mid); margin:0;}
+
+  .panel{display:none;}
+  .panel.active{display:block; animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:translateY(0)}}
+
+  .card{background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius); padding:22px; margin-bottom:20px;}
+  .card h2{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:0 0 4px;}
+  .card .sub{font-size:12px; color:var(--text-low); margin:0 0 18px;}
+
+  /* plans table */
+  .plans-table{width:100%; border-collapse:collapse;}
+  .plans-table th{
+    text-align:left; font-size:11px; color:var(--text-low); text-transform:uppercase; letter-spacing:.05em;
+    font-weight:500; padding:0 10px 10px; border-bottom:1px solid var(--stroke);
+  }
+  .plans-table td{padding:10px; border-bottom:1px solid var(--stroke); vertical-align:middle;}
+  .plans-table tr:last-child td{border-bottom:none;}
+  .plans-table input[type=number]{
+    width:80px; background:var(--bg-elev); border:1px solid var(--stroke); border-radius:8px;
+    padding:8px 10px; color:var(--text-hi); font-family:'JetBrains Mono',monospace; font-size:13px; outline:none;
+  }
+  .plans-table input[type=number]:focus{border-color:var(--accent-1);}
+  .plans-table input[type=checkbox]{accent-color:var(--accent-1); width:16px; height:16px;}
+  .row-del{
+    background:none; border:1px solid var(--stroke); color:var(--text-low); width:28px; height:28px;
+    border-radius:8px; cursor:pointer; font-size:15px; line-height:1;
+  }
+  .row-del:hover{border-color:var(--bad); color:var(--bad);}
+  .add-plan-btn{
+    margin-top:12px; background:var(--bg-elev); border:1px dashed var(--stroke); color:var(--text-mid);
+    padding:10px 16px; border-radius:10px; font-size:12.5px; font-weight:500; cursor:pointer; width:100%;
+  }
+  .add-plan-btn:hover{border-color:var(--accent-1); color:var(--accent-2);}
+
+  /* form fields */
+  .field-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; color:var(--text-mid); margin-bottom:6px;}
+  .field input{
+    width:100%; background:var(--bg-elev); border:1px solid var(--stroke); border-radius:10px;
+    padding:11px 13px; color:var(--text-hi); font-family:'JetBrains Mono',monospace; font-size:13.5px; outline:none;
+  }
+  .field input:focus{border-color:var(--accent-1);}
+  .field .hint{font-size:11px; color:var(--text-low); margin-top:5px;}
+
+  .save-row{display:flex; gap:10px; align-items:center;}
+  .btn-primary{
+    background:linear-gradient(120deg,var(--accent-1),#6E4CF0); color:#fff; border:none;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px;
+    padding:11px 20px; border-radius:10px; cursor:pointer; box-shadow:0 8px 20px var(--accent-glow);
+  }
+  .btn-primary:active{transform:scale(.98);}
+  .btn-ghost{
+    background:transparent; border:1px solid var(--stroke); color:var(--text-mid);
+    font-size:13px; font-weight:500; padding:11px 16px; border-radius:10px; cursor:pointer;
+  }
+  .btn-ghost:hover{color:var(--text-hi); border-color:var(--text-low);}
+
+  /* users table (mock) */
+  .users-table{width:100%; border-collapse:collapse;}
+  .users-table th{
+    text-align:left; font-size:11px; color:var(--text-low); text-transform:uppercase; letter-spacing:.05em;
+    font-weight:500; padding:0 10px 10px; border-bottom:1px solid var(--stroke);
+  }
+  .users-table td{padding:12px 10px; border-bottom:1px solid var(--stroke); font-size:13px;}
+  .users-table tr:last-child td{border-bottom:none;}
+  .status-chip{
+    font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px;
+  }
+  .status-chip.active{background:rgba(63,221,166,.12); color:var(--good);}
+  .status-chip.pending{background:rgba(255,180,84,.12); color:var(--warn);}
+  .status-chip.rejected{background:rgba(255,107,107,.12); color:var(--bad);}
+  .req-actions{display:flex; gap:6px;}
+  .req-actions button{
+    border:1px solid var(--stroke); background:var(--bg-elev); font-size:11.5px; font-weight:600;
+    padding:6px 12px; border-radius:8px; cursor:pointer;
+  }
+  .req-actions button.approve{color:var(--good); border-color:rgba(63,221,166,.35);}
+  .req-actions button.approve:hover{background:rgba(63,221,166,.1);}
+  .req-actions button.reject{color:var(--bad); border-color:rgba(255,107,107,.35);}
+  .req-actions button.reject:hover{background:rgba(255,107,107,.1);}
+  .demo-note{
+    display:flex; gap:8px; align-items:flex-start; background:rgba(255,180,84,.08); border:1px solid rgba(255,180,84,.28);
+    color:var(--warn); padding:11px 14px; border-radius:10px; font-size:12px; line-height:1.5; margin-bottom:18px;
+  }
+
+  /* ---------- texts editor ---------- */
+  .text-row{
+    display:grid; grid-template-columns:150px 1fr 1fr; gap:10px; padding:10px 0; border-bottom:1px solid var(--stroke); align-items:start;
+  }
+  .text-row:last-child{border-bottom:none;}
+  .text-row .key-lab{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-low); padding-top:10px; word-break:break-all;}
+  .text-row textarea{
+    width:100%; background:var(--bg-elev); border:1px solid var(--stroke); border-radius:9px;
+    padding:8px 10px; color:var(--text-hi); font-size:12.5px; font-family:'Inter',sans-serif; resize:vertical; min-height:38px; outline:none;
+  }
+  .text-row textarea:focus{border-color:var(--accent-1);}
+  .text-row-head{
+    display:grid; grid-template-columns:150px 1fr 1fr; gap:10px; padding-bottom:8px; margin-bottom:4px; border-bottom:1px solid var(--stroke);
+    font-size:11px; color:var(--text-low); text-transform:uppercase; letter-spacing:.05em;
+  }
+
+  .toast{
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--bg-card); border:1px solid var(--stroke); color:var(--text-hi);
+    padding:12px 20px; border-radius:12px; font-size:13px; opacity:0; pointer-events:none;
+    transition:.25s; z-index:50; box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:760px){
+    body{flex-direction:column;}
+    aside{width:100%; position:relative; flex-direction:row; overflow-x:auto; padding:14px 12px; gap:6px;}
+    .brand{display:none;}
+    .sidebar-foot{display:none;}
+    .navitem{white-space:nowrap;}
+    main{padding:20px 16px;}
+    .field-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand"><div class="mark">N</div><div class="word">NovaYield<br><span style="color:var(--text-low); font-weight:400;">Admin</span></div></div>
+  <div class="navitem active" data-panel="plans">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg>
+    Тарифы стейкинга
+  </div>
+  <div class="navitem" data-panel="referral">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/></svg>
+    Реферальная программа
+  </div>
+  <div class="navitem" data-panel="refrequests">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+    Заявки на рефералку<span class="req-badge" id="reqBadge" style="display:none;">0</span>
+  </div>
+  <div class="navitem" data-panel="payments">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/></svg>
+    Реквизиты пополнения
+  </div>
+  <div class="navitem" data-panel="trading">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-6 4 4 8-9"/><path d="M15 6h5v5"/></svg>
+    Торговля
+  </div>
+  <div class="navitem" data-panel="general">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 000-2l2-1.5-2-3.4-2.4.6a7.7 7.7 0 00-1.7-1L15 3h-4l-.3 2.7a7.7 7.7 0 00-1.7 1l-2.4-.6-2 3.4L6.6 11a7.6 7.6 0 000 2l-2 1.5 2 3.4 2.4-.6c.5.4 1.1.8 1.7 1L11 21h4l.3-2.7c.6-.2 1.2-.6 1.7-1l2.4.6 2-3.4-2-1.5z"/></svg>
+    Общие настройки
+  </div>
+  <div class="navitem" data-panel="texts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+    Тексты интерфейса
+  </div>
+  <div class="navitem" data-panel="users">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg>
+    Пользователи
+  </div>
+  <div class="sidebar-foot">nova-yield-demo · admin панель редактирует локальный конфиг мини-аппа</div>
+</aside>
+
+<main>
+
+  <!-- PLANS -->
+  <section class="panel active" id="panel-plans">
+    <div class="page-head">
+      <h1>Тарифы стейкинга</h1>
+      <p>Срок и ставка каждого тарифа, показываемого в мини-аппе</p>
+    </div>
+    <div class="card">
+      <table class="plans-table">
+        <thead>
+          <tr><th>Срок (дней)</th><th>Ставка за срок (%)</th><th>Мин. сумма</th><th>Выделен</th><th></th></tr>
+        </thead>
+        <tbody id="plansBody"></tbody>
+      </table>
+      <button class="add-plan-btn" onclick="addPlanRow()">+ Добавить тариф</button>
+    </div>
+    <div class="save-row">
+      <button class="btn-primary" onclick="savePlans()">Сохранить тарифы</button>
+      <button class="btn-ghost" onclick="resetSection('plans')">Сбросить к умолчаниям</button>
+    </div>
+  </section>
+
+  <!-- REFERRAL -->
+  <section class="panel" id="panel-referral">
+    <div class="page-head">
+      <h1>Реферальная программа</h1>
+      <p>Уровни вознаграждения по количеству приглашённых и реф-ссылка</p>
+    </div>
+    <div class="card">
+      <h2>Уровни вознаграждения</h2>
+      <p class="sub">Ставка зависит от общего числа приглашённых пользователем</p>
+      <table class="plans-table">
+        <thead><tr><th>От</th><th>До (пусто = без верхней границы)</th><th>Ставка (%)</th><th></th></tr></thead>
+        <tbody id="tiersBody"></tbody>
+      </table>
+      <button class="add-plan-btn" onclick="addTierRow()">+ Добавить уровень</button>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>Реферальная ссылка</label>
+        <input type="text" id="cfgRefLink">
+      </div>
+    </div>
+    <div class="save-row">
+      <button class="btn-primary" onclick="saveReferral()">Сохранить</button>
+      <button class="btn-ghost" onclick="resetSection('referral')">Сбросить к умолчаниям</button>
+    </div>
+  </section>
+
+  <!-- PAYMENTS -->
+  <section class="panel" id="panel-payments">
+    <div class="page-head">
+      <h1>Реквизиты пополнения</h1>
+      <p>Адреса кошельков, реквизиты карты и лимиты/курс для пополнения гривной</p>
+    </div>
+
+    <div class="card">
+      <h2>USDT-адреса</h2>
+      <p class="sub">Показываются пользователю в зависимости от выбранной сети</p>
+      <div class="field-grid">
+        <div class="field"><label>TRC20 (Tron)</label><input type="text" id="cfgAddrTRC20"></div>
+        <div class="field"><label>ERC20 (Ethereum)</label><input type="text" id="cfgAddrERC20"></div>
+        <div class="field"><label>BEP20 (BNB Chain)</label><input type="text" id="cfgAddrBEP20"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Банковская карта</h2>
+      <p class="sub">Реквизиты для ручного перевода</p>
+      <div class="field-grid">
+        <div class="field"><label>Номер карты</label><input type="text" id="cfgCardNumber"></div>
+        <div class="field"><label>Имя получателя</label><input type="text" id="cfgCardHolder"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Лимиты и курс (гривна)</h2>
+      <div class="field-grid">
+        <div class="field"><label>Мин. сумма, грн</label><input type="number" id="cfgUahMin"></div>
+        <div class="field"><label>Макс. сумма, грн</label><input type="number" id="cfgUahMax"></div>
+        <div class="field"><label>Курс, грн за 1 USDT</label><input type="number" step="0.01" id="cfgUahRate"></div>
+      </div>
+      <div class="hint">Курс используется только для отображения зачисленной суммы в USDT в демо-версии.</div>
+    </div>
+
+    <div class="save-row">
+      <button class="btn-primary" onclick="savePayments()">Сохранить реквизиты</button>
+      <button class="btn-ghost" onclick="resetSection('payments')">Сбросить к умолчаниям</button>
+    </div>
+  </section>
+
+  <!-- TRADING -->
+  <section class="panel" id="panel-trading">
+    <div class="page-head">
+      <h1>Торговля</h1>
+      <p>Спред, максимальное плечо и комиссия за вывод в мини-аппе</p>
+    </div>
+    <div class="card">
+      <div class="field-grid">
+        <div class="field">
+          <label>Спред (%)</label>
+          <input type="number" step="0.001" id="cfgSpread">
+          <div class="hint">Разница между ценой покупки и продажи на экране пары</div>
+        </div>
+        <div class="field">
+          <label>Максимальное плечо</label>
+          <input type="number" step="1" min="1" id="cfgMaxLeverage">
+        </div>
+        <div class="field">
+          <label>Комиссия за вывод, USDT</label>
+          <input type="number" step="0.1" id="cfgWithdrawFee">
+        </div>
+      </div>
+    </div>
+    <div class="save-row">
+      <button class="btn-primary" onclick="saveTrading()">Сохранить</button>
+      <button class="btn-ghost" onclick="resetSection('trading')">Сбросить к умолчаниям</button>
+    </div>
+  </section>
+
+  <!-- GENERAL -->
+  <section class="panel" id="panel-general">
+    <div class="page-head">
+      <h1>Общие настройки</h1>
+      <p>Название приложения, стартовый баланс и язык по умолчанию</p>
+    </div>
+    <div class="card">
+      <div class="field-grid">
+        <div class="field">
+          <label>Название приложения</label>
+          <input type="text" id="cfgBrandName">
+        </div>
+        <div class="field">
+          <label>Стартовый баланс, USDT</label>
+          <input type="number" step="0.01" id="cfgStartingBalance">
+        </div>
+        <div class="field">
+          <label>Язык по умолчанию</label>
+          <select id="cfgDefaultLang" style="width:100%; background:var(--bg-elev); border:1px solid var(--stroke); border-radius:10px; padding:11px 13px; color:var(--text-hi); font-size:13.5px;">
+            <option value="ru">Русский</option>
+            <option value="uk">Українська</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="save-row">
+      <button class="btn-primary" onclick="saveGeneral()">Сохранить</button>
+      <button class="btn-ghost" onclick="resetSection('general')">Сбросить к умолчаниям</button>
+    </div>
+  </section>
+
+  <!-- TEXTS -->
+  <section class="panel" id="panel-texts">
+    <div class="page-head">
+      <h1>Тексты интерфейса</h1>
+      <p>Любая надпись в мини-аппе — кнопки, заголовки, подсказки. Изменения применяются сразу после сохранения.</p>
+    </div>
+    <div class="demo-note" style="border-color:rgba(139,108,255,.3); background:rgba(139,108,255,.06); color:var(--accent-2);">
+      <span>●</span>
+      <span>Найдено <span id="textsCount">0</span> строк. Используйте поиск, чтобы быстро найти нужную — вводите как ключ, так и часть самого текста.</span>
+    </div>
+    <div class="card">
+      <input type="text" id="textsSearch" placeholder="Поиск по тексту или названию поля…"
+        style="width:100%; background:var(--bg-elev); border:1px solid var(--stroke); border-radius:10px; padding:11px 13px; color:var(--text-hi); font-size:13.5px; outline:none; margin-bottom:16px;"
+        oninput="renderTexts()">
+      <div id="textsList"></div>
+    </div>
+    <div class="save-row">
+      <button class="btn-primary" onclick="saveTexts()">Сохранить тексты</button>
+      <button class="btn-ghost" onclick="resetSection('texts')">Сбросить все тексты к умолчаниям</button>
+    </div>
+  </section>
+
+  <!-- REFERRAL REQUESTS -->
+  <section class="panel" id="panel-refrequests">
+    <div class="page-head">
+      <h1>Заявки на реферальную программу</h1>
+      <p>Пользователь подаёт заявку в мини-аппе — вы одобряете или отклоняете её здесь</p>
+    </div>
+    <div class="card">
+      <div id="reqEmpty" class="hint" style="display:none;">Заявок пока нет</div>
+      <table class="users-table" id="reqTable" style="display:none;">
+        <thead><tr><th>Пользователь</th><th>Подана</th><th>Статус</th><th></th></tr></thead>
+        <tbody id="reqBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- USERS -->
+  <section class="panel" id="panel-users">
+    <div class="page-head">
+      <h1>Пользователи</h1>
+      <p>Список участников платформы</p>
+    </div>
+    <div class="demo-note">
+      <span>●</span>
+      <span>Демо-данные. Без бэкенда список нельзя связать с реальными пользователями мини-аппа — здесь только пример того, как будет выглядеть таблица.</span>
+    </div>
+    <div class="card">
+      <table class="users-table">
+        <thead><tr><th>Пользователь</th><th>Баланс, USDT</th><th>Рефералов</th><th>Статус</th></tr></thead>
+        <tbody>
+          <tr><td>@mikhail_p</td><td>28 969.91</td><td>7</td><td><span class="status-chip active">Активен</span></td></tr>
+          <tr><td>@olena_k</td><td>1 200.00</td><td>0</td><td><span class="status-chip active">Активен</span></td></tr>
+          <tr><td>@dmitry_v</td><td>840.00</td><td>2</td><td><span class="status-chip pending">Ожидает</span></td></tr>
+          <tr><td>@anna_s</td><td>2 500.00</td><td>1</td><td><span class="status-chip active">Активен</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_CONFIG = {
+  plans: [
+    {days:45, apy:90, min:100},
+    {days:45, apy:157.5, min:500, featured:true},
+  ],
+  referralTiers: [
+    {min:1, max:4, rate:15},
+    {min:5, max:9, rate:20},
+    {min:10, max:19, rate:20},
+    {min:20, max:29, rate:30},
+    {min:30, max:49, rate:40},
+    {min:50, max:null, rate:50},
+  ],
+  refLink: "t.me/novayield_bot?start=ref_8841kf",
+  cryptoAddresses: { TRC20:"TXk9s...4fQ2m", ERC20:"0x8f2a...91cE", BEP20:"0x8f2a...91cE" },
+  cardNumber: "4441 1149 9911 2233",
+  cardHolder: "IVAN PETRENKO",
+  uahMin: 2250,
+  uahMax: 29999,
+  uahRate: 45,
+  brandName: "NovaYield",
+  startingBalance: 28969.91,
+  withdrawFee: 1.0,
+  tradingSpreadPct: 0.015,
+  maxLeverage: 100,
+  defaultLang: "ru",
+  textOverrides: {},
+};
+
+function loadConfig(){
+  try {
+    const raw = localStorage.getItem('novayield_config');
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), JSON.parse(raw));
+  } catch(e){ return JSON.parse(JSON.stringify(DEFAULT_CONFIG)); }
+}
+function saveConfig(cfg){
+  localStorage.setItem('novayield_config', JSON.stringify(cfg));
+}
+
+let CONFIG = loadConfig();
+
+const DEFAULT_TEXTS = { ru: {"demoText":"Демо-версия интерфейса. Данные ниже — тестовые, реальных начислений и выплат нет.","portfolio":"Портфель","totalBalance":"Общий баланс","days":"дн.","topup":"Пополнить USDT","stakingPlans":"Тарифы стейкинга","demoRates":"демо-ставки","referral":"Реферальная программа","refRateText":"от суммы депозита каждого приглашённого — начисляется на ваш баланс","copy":"Скопировать","invited":"Приглашено","earned":"Заработано, USDT","yourInvites":"Ваши приглашённые","settings":"Настройки","language":"Язык","account":"Аккаунт","notifications":"Уведомления","on":"Включены","support":"Поддержка","navPortfolio":"Портфель","navReferral":"Рефералы","navSettings":"Настройки","stakeBtn":"Застейкать","topupToast":"Демо-режим: пополнение недоступно","copiedToast":"Ссылка скопирована","topupTitle":"Пополнение USDT","enterAmount":"Сумма пополнения","chooseNetwork":"Сеть","feeLow":"мин. комиссия","continue":"Продолжить","sendExactly":"Отправьте точную сумму","depositAddress":"Адрес для пополнения","addrHint":"Отправляйте только USDT в выбранной сети. Средства в другой сети будут потеряны.","iSent":"Я отправил(а)","back":"Назад","pendingTitle":"Ожидаем поступление","pendingSub":"Обычно это занимает 1–3 подтверждения сети. Баланс обновится автоматически.","done":"Готово","addrCopied":"Адрес скопирован","topupBtn":"Пополнить USDT/Банковская Карта","topupBtnShort":"Пополнить","withdrawBtn":"Вывести","withdrawTitle":"Вывод USDT","withdrawAmountLabel":"Сумма вывода","withdrawAddressLabel":"Адрес USDT-кошелька","withdrawAddressPlaceholder":"Введите адрес кошелька","withdrawNetworkLabel":"Сеть","withdrawFeeLabel":"Комиссия сети","withdrawContinue":"Продолжить","withdrawConfirm":"Подтвердить вывод","withdrawReviewTitle":"Проверьте детали вывода","withdrawToAddress":"Адрес получения","withdrawCreatedTitle":"Заявка на вывод создана","withdrawCreatedSub":"Обычно обработка занимает до 30 минут. Баланс уже обновлён.","insufficientBalance":"Недостаточно средств на балансе","openPositions":"Открытые сделки","openTradeTitle":"Открыть сделку","tradeAmountLabel":"Размер позиции","leverageLabel":"Плечо","tpLabel":"Тейк-профит","slLabel":"Стоп-лосс","entryPriceLabel":"Цена входа","tradeSizeLabel":"Объём с плечом","liqLabel":"Ликвидация","openTradeBtn":"Открыть сделку","tpBelowPrice":"Тейк-профит должен быть выше цены для покупки / ниже для продажи","slWrongSide":"Стоп-лосс должен быть ниже цены для покупки / выше для продажи","positionClosedToast":"Сделка закрыта","tpHitToast":"Сработал тейк-профит","slHitToast":"Сработал стоп-лосс","entry":"Вход","size":"Объём","pnlLabel":"P&L","positionOpenedToast":"открыта","editBtn":"Изменить","editTradeTitle":"Изменить сделку","currentPriceLabel":"Текущая цена","saveChanges":"Сохранить","changesSavedToast":"Изменения сохранены","myTradesTab":"Открытые сделки","marketsTab":"Рынки","noOpenTrades":"Нет открытых сделок","closePartLabel":"Закрыть часть позиции","overTerm":"за срок","minFrom":"мин.","activeStakes":"Активные стейки","stakeAmountLabel":"Сумма стейка","available":"Доступно","max":"MAX","reviewTitle":"Проверьте условия","amountLbl":"Сумма","durationLbl":"Срок","apyLbl":"APY","estEarnLbl":"Прогноз дохода","unlockLbl":"Разблокировка","agreeText":"Понимаю, что средства заблокированы до даты разблокировки","confirmStakeBtn":"Подтвердить стейк","stakeCreatedTitle":"Стейк открыт","daysWord":"дней","unlocksOn":"Разблокировка","earnLabel":"доход","payMethodTitle":"Способ пополнения","methodUsdt":"USDT","methodUsdtSub":"Крипто-перевод · TRC20 / ERC20 / BEP20","methodCard":"Банковская карта","methodCardSub":"Visa · Mastercard · мгновенное зачисление","cardDetailsTitle":"Перевод на карту","cardNumber":"Номер карты","expiry":"Срок","cardholder":"Держатель карты","pay":"Оплатить","processingTitle":"Обрабатываем платёж…","processingSub":"Это займёт несколько секунд","cardSuccessTitle":"Баланс пополнен","creditedText":"зачислено на баланс","uahLabel":"грн","cardRangeHint":"Мин. 2 250 – макс. 29 999 грн","recipientCard":"Номер карты для перевода","recipientName":"Получатель","cardTransferHint":"Переведите точную сумму на указанную карту. Баланс пополнится после подтверждения перевода.","iTransferred":"Я перевёл(а)","markets":"Рынки","navMarkets":"Рынки","today":"за сегодня","marketsDemoNote":"Крипта и золото (PAXG) — реальные цены Binance, обновляются каждые 3 секунды. Форекс и USD/UAH — официальные курсы ЕЦБ/НБУ, которые сами эти институты публикуют не чаще раза в день. Товары и биржевые индексы убраны из списка — для них нет бесплатного официального источника без платного API-ключа.","todayLabel":"Сегодня","minLabel":"Минимум","maxLabel":"Максимум","sellLabel":"Продать","buyLabel":"Купить","spreadLabel":"Спред","searchPlaceholder":"Поиск: BTC, EUR, Gold…","catAll":"Все","catCrypto":"Крипто","catForex":"Форекс","catCommodity":"Товары","catIndex":"Индексы","noResults":"Ничего не найдено","liveTag":"LIVE","connectingTag":"…"}, uk: {"demoText":"Демо-версія інтерфейсу. Дані нижче — тестові, реальних нарахувань і виплат немає.","portfolio":"Портфель","totalBalance":"Загальний баланс","days":"дн.","topup":"Поповнити USDT","stakingPlans":"Тарифи стейкінгу","demoRates":"демо-ставки","referral":"Реферальна програма","refRateText":"від суми депозиту кожного запрошеного — нараховується на ваш баланс","copy":"Скопіювати","invited":"Запрошено","earned":"Зароблено, USDT","yourInvites":"Ваші запрошені","settings":"Налаштування","language":"Мова","account":"Акаунт","notifications":"Сповіщення","on":"Увімкнено","support":"Підтримка","navPortfolio":"Портфель","navReferral":"Реферали","navSettings":"Налаштування","stakeBtn":"Застейкати","topupToast":"Демо-режим: поповнення недоступне","copiedToast":"Посилання скопійовано","topupTitle":"Поповнення USDT","enterAmount":"Сума поповнення","chooseNetwork":"Мережа","feeLow":"мін. комісія","continue":"Продовжити","sendExactly":"Надішліть точну суму","depositAddress":"Адреса для поповнення","addrHint":"Надсилайте лише USDT в обраній мережі. Кошти в іншій мережі буде втрачено.","iSent":"Я надіслав(ла)","back":"Назад","pendingTitle":"Очікуємо надходження","pendingSub":"Зазвичай це займає 1–3 підтвердження мережі. Баланс оновиться автоматично.","done":"Готово","addrCopied":"Адресу скопійовано","topupBtn":"Поповнити USDT/Банківська Картка","topupBtnShort":"Поповнити","withdrawBtn":"Вивести","withdrawTitle":"Виведення USDT","withdrawAmountLabel":"Сума виведення","withdrawAddressLabel":"Адреса USDT-гаманця","withdrawAddressPlaceholder":"Введіть адресу гаманця","withdrawNetworkLabel":"Мережа","withdrawFeeLabel":"Комісія мережі","withdrawContinue":"Продовжити","withdrawConfirm":"Підтвердити виведення","withdrawReviewTitle":"Перевірте деталі виведення","withdrawToAddress":"Адреса отримання","withdrawCreatedTitle":"Заявку на виведення створено","withdrawCreatedSub":"Зазвичай обробка займає до 30 хвилин. Баланс уже оновлено.","insufficientBalance":"Недостатньо коштів на балансі","openPositions":"Відкриті угоди","openTradeTitle":"Відкрити угоду","tradeAmountLabel":"Розмір позиції","leverageLabel":"Плече","tpLabel":"Тейк-профіт","slLabel":"Стоп-лосс","entryPriceLabel":"Ціна входу","tradeSizeLabel":"Обсяг з плечем","liqLabel":"Ліквідація","openTradeBtn":"Відкрити угоду","tpBelowPrice":"Тейк-профіт має бути вищим за ціну для купівлі / нижчим для продажу","slWrongSide":"Стоп-лосс має бути нижчим за ціну для купівлі / вищим для продажу","positionClosedToast":"Угоду закрито","tpHitToast":"Спрацював тейк-профіт","slHitToast":"Спрацював стоп-лосс","entry":"Вхід","size":"Обсяг","pnlLabel":"P&L","positionOpenedToast":"відкрита","editBtn":"Змінити","editTradeTitle":"Змінити угоду","currentPriceLabel":"Поточна ціна","saveChanges":"Зберегти","changesSavedToast":"Зміни збережено","myTradesTab":"Відкриті угоди","marketsTab":"Ринки","noOpenTrades":"Немає відкритих угод","closePartLabel":"Закрити частину позиції","overTerm":"за термін","minFrom":"мін.","activeStakes":"Активні стейки","stakeAmountLabel":"Сума стейку","available":"Доступно","max":"MAX","reviewTitle":"Перевірте умови","amountLbl":"Сума","durationLbl":"Термін","apyLbl":"APY","estEarnLbl":"Прогноз доходу","unlockLbl":"Розблокування","agreeText":"Розумію, що кошти заблоковані до дати розблокування","confirmStakeBtn":"Підтвердити стейк","stakeCreatedTitle":"Стейк відкрито","daysWord":"днів","unlocksOn":"Розблокування","earnLabel":"дохід","payMethodTitle":"Спосіб поповнення","methodUsdt":"USDT","methodUsdtSub":"Крипто-переказ · TRC20 / ERC20 / BEP20","methodCard":"Банківська картка","methodCardSub":"Visa · Mastercard · миттєве зарахування","cardDetailsTitle":"Переказ на картку","cardNumber":"Номер картки","expiry":"Термін","cardholder":"Власник картки","pay":"Оплатити","processingTitle":"Обробляємо платіж…","processingSub":"Це займе декілька секунд","cardSuccessTitle":"Баланс поповнено","creditedText":"зараховано на баланс","uahLabel":"грн","cardRangeHint":"Мін. 2 250 – макс. 29 999 грн","recipientCard":"Номер картки для переказу","recipientName":"Отримувач","cardTransferHint":"Переведіть точну суму на вказану картку. Баланс поповниться після підтвердження переказу.","iTransferred":"Я переказав(ла)","markets":"Ринки","navMarkets":"Ринки","today":"за сьогодні","marketsDemoNote":"Крипта і золото (PAXG) — реальні ціни Binance, оновлюються кожні 3 секунди. Форекс і USD/UAH — офіційні курси ЄЦБ/НБУ, які самі ці установи публікують не частіше разу на день. Товари та біржові індекси прибрано зі списку — для них немає безкоштовного офіційного джерела без платного API-ключа.","todayLabel":"Сьогодні","minLabel":"Мінімум","maxLabel":"Максимум","sellLabel":"Продати","buyLabel":"Купити","spreadLabel":"Спред","searchPlaceholder":"Пошук: BTC, EUR, Gold…","catAll":"Всі","catCrypto":"Крипто","catForex":"Форекс","catCommodity":"Товари","catIndex":"Індекси","noResults":"Нічого не знайдено","liveTag":"LIVE","connectingTag":"…"} };
+
+/* ---------- nav ---------- */
+document.querySelectorAll('.navitem').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.navitem').forEach(i=>i.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('panel-' + item.dataset.panel).classList.add('active');
+  });
+});
+
+/* ---------- plans ---------- */
+function renderPlans(){
+  const body = document.getElementById('plansBody');
+  body.innerHTML = '';
+  CONFIG.plans.forEach((p, i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="number" value="${p.days}" min="1" data-field="days" data-i="${i}"></td>
+      <td><input type="number" value="${p.apy}" step="0.1" min="0" data-field="apy" data-i="${i}"></td>
+      <td><input type="number" value="${p.min||0}" step="1" min="0" data-field="min" data-i="${i}"></td>
+      <td><input type="checkbox" ${p.featured ? 'checked' : ''} data-field="featured" data-i="${i}"></td>
+      <td><button class="row-del" onclick="removePlanRow(${i})">×</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const i = +inp.dataset.i, field = inp.dataset.field;
+      if (field === 'featured') CONFIG.plans[i][field] = inp.checked;
+      else CONFIG.plans[i][field] = parseFloat(inp.value) || 0;
+    });
+  });
+}
+function addPlanRow(){
+  CONFIG.plans.push({days:45, apy:90, min:100, featured:false});
+  renderPlans();
+}
+function removePlanRow(i){
+  CONFIG.plans.splice(i,1);
+  renderPlans();
+}
+function savePlans(){
+  saveConfig(CONFIG);
+  toast('Тарифы сохранены');
+}
+
+/* ---------- referral ---------- */
+function renderTiers(){
+  const body = document.getElementById('tiersBody');
+  body.innerHTML = '';
+  CONFIG.referralTiers.forEach((tr, i)=>{
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="number" value="${tr.min}" min="1" data-field="min" data-i="${i}"></td>
+      <td><input type="number" value="${tr.max===null?'':tr.max}" min="1" placeholder="∞" data-field="max" data-i="${i}"></td>
+      <td><input type="number" value="${tr.rate}" min="0" step="0.1" data-field="rate" data-i="${i}"></td>
+      <td><button class="row-del" onclick="removeTierRow(${i})">×</button></td>
+    `;
+    body.appendChild(row);
+  });
+  body.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const i = +inp.dataset.i, field = inp.dataset.field;
+      if (field === 'max'){
+        CONFIG.referralTiers[i].max = inp.value === '' ? null : parseFloat(inp.value);
+      } else {
+        CONFIG.referralTiers[i][field] = parseFloat(inp.value) || 0;
+      }
+    });
+  });
+}
+function addTierRow(){
+  const last = CONFIG.referralTiers[CONFIG.referralTiers.length-1];
+  CONFIG.referralTiers.push({min:(last.max||last.min)+1, max:null, rate:last.rate});
+  renderTiers();
+}
+function removeTierRow(i){
+  CONFIG.referralTiers.splice(i,1);
+  renderTiers();
+}
+function fillReferral(){
+  renderTiers();
+  document.getElementById('cfgRefLink').value = CONFIG.refLink;
+}
+function saveReferral(){
+  CONFIG.refLink = document.getElementById('cfgRefLink').value.trim();
+  saveConfig(CONFIG);
+  toast('Реферальная программа сохранена');
+}
+
+/* ---------- payments ---------- */
+function fillPayments(){
+  document.getElementById('cfgAddrTRC20').value = CONFIG.cryptoAddresses.TRC20;
+  document.getElementById('cfgAddrERC20').value = CONFIG.cryptoAddresses.ERC20;
+  document.getElementById('cfgAddrBEP20').value = CONFIG.cryptoAddresses.BEP20;
+  document.getElementById('cfgCardNumber').value = CONFIG.cardNumber;
+  document.getElementById('cfgCardHolder').value = CONFIG.cardHolder;
+  document.getElementById('cfgUahMin').value = CONFIG.uahMin;
+  document.getElementById('cfgUahMax').value = CONFIG.uahMax;
+  document.getElementById('cfgUahRate').value = CONFIG.uahRate;
+}
+function savePayments(){
+  CONFIG.cryptoAddresses = {
+    TRC20: document.getElementById('cfgAddrTRC20').value.trim(),
+    ERC20: document.getElementById('cfgAddrERC20').value.trim(),
+    BEP20: document.getElementById('cfgAddrBEP20').value.trim(),
+  };
+  CONFIG.cardNumber = document.getElementById('cfgCardNumber').value.trim();
+  CONFIG.cardHolder = document.getElementById('cfgCardHolder').value.trim().toUpperCase();
+  CONFIG.uahMin = parseFloat(document.getElementById('cfgUahMin').value) || 0;
+  CONFIG.uahMax = parseFloat(document.getElementById('cfgUahMax').value) || 0;
+  CONFIG.uahRate = parseFloat(document.getElementById('cfgUahRate').value) || 1;
+  saveConfig(CONFIG);
+  toast('Реквизиты сохранены');
+}
+
+/* ---------- trading ---------- */
+function fillTrading(){
+  document.getElementById('cfgSpread').value = CONFIG.tradingSpreadPct;
+  document.getElementById('cfgMaxLeverage').value = CONFIG.maxLeverage;
+  document.getElementById('cfgWithdrawFee').value = CONFIG.withdrawFee;
+}
+function saveTrading(){
+  CONFIG.tradingSpreadPct = parseFloat(document.getElementById('cfgSpread').value) || 0;
+  CONFIG.maxLeverage = parseInt(document.getElementById('cfgMaxLeverage').value, 10) || 1;
+  CONFIG.withdrawFee = parseFloat(document.getElementById('cfgWithdrawFee').value) || 0;
+  saveConfig(CONFIG);
+  toast('Настройки торговли сохранены');
+}
+
+/* ---------- general ---------- */
+function fillGeneral(){
+  document.getElementById('cfgBrandName').value = CONFIG.brandName;
+  document.getElementById('cfgStartingBalance').value = CONFIG.startingBalance;
+  document.getElementById('cfgDefaultLang').value = CONFIG.defaultLang;
+}
+function saveGeneral(){
+  CONFIG.brandName = document.getElementById('cfgBrandName').value.trim() || 'NovaYield';
+  CONFIG.startingBalance = parseFloat(document.getElementById('cfgStartingBalance').value) || 0;
+  CONFIG.defaultLang = document.getElementById('cfgDefaultLang').value;
+  saveConfig(CONFIG);
+  toast('Общие настройки сохранены');
+}
+
+/* ---------- reset ---------- */
+function resetSection(section){
+  const defaults = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  if (section === 'plans') CONFIG.plans = defaults.plans;
+  if (section === 'referral'){ CONFIG.referralTiers = defaults.referralTiers; CONFIG.refLink = defaults.refLink; }
+  if (section === 'payments'){
+    CONFIG.cryptoAddresses = defaults.cryptoAddresses;
+    CONFIG.cardNumber = defaults.cardNumber;
+    CONFIG.cardHolder = defaults.cardHolder;
+    CONFIG.uahMin = defaults.uahMin;
+    CONFIG.uahMax = defaults.uahMax;
+    CONFIG.uahRate = defaults.uahRate;
+  }
+  if (section === 'trading'){
+    CONFIG.tradingSpreadPct = defaults.tradingSpreadPct;
+    CONFIG.maxLeverage = defaults.maxLeverage;
+    CONFIG.withdrawFee = defaults.withdrawFee;
+  }
+  if (section === 'general'){
+    CONFIG.brandName = defaults.brandName;
+    CONFIG.startingBalance = defaults.startingBalance;
+    CONFIG.defaultLang = defaults.defaultLang;
+  }
+  if (section === 'texts'){
+    CONFIG.textOverrides = {};
+  }
+  saveConfig(CONFIG);
+  renderPlans(); fillReferral(); fillPayments(); fillTrading(); fillGeneral(); renderTexts();
+  toast('Сброшено к умолчаниям');
+}
+
+/* ---------- texts editor ---------- */
+function currentTextValue(lang, key){
+  if (CONFIG.textOverrides && CONFIG.textOverrides[lang] && CONFIG.textOverrides[lang][key] !== undefined){
+    return CONFIG.textOverrides[lang][key];
+  }
+  return DEFAULT_TEXTS[lang][key];
+}
+function renderTexts(){
+  const list = document.getElementById('textsList');
+  const q = (document.getElementById('textsSearch').value || '').trim().toLowerCase();
+  const keys = Object.keys(DEFAULT_TEXTS.ru).filter(k=>{
+    if (!q) return true;
+    return k.toLowerCase().includes(q)
+      || currentTextValue('ru', k).toLowerCase().includes(q)
+      || currentTextValue('uk', k).toLowerCase().includes(q);
+  });
+  document.getElementById('textsCount').textContent = Object.keys(DEFAULT_TEXTS.ru).length;
+  let html = '<div class="text-row-head"><div>Ключ</div><div>Русский</div><div>Українська</div></div>';
+  keys.forEach(k=>{
+    html += `
+      <div class="text-row">
+        <div class="key-lab">${k}</div>
+        <textarea data-lang="ru" data-key="${k}" oninput="onTextEdit(this)">${currentTextValue('ru', k)}</textarea>
+        <textarea data-lang="uk" data-key="${k}" oninput="onTextEdit(this)">${currentTextValue('uk', k)}</textarea>
+      </div>
+    `;
+  });
+  list.innerHTML = html || '<div class="hint">Ничего не найдено</div>';
+}
+function onTextEdit(el){
+  const lang = el.dataset.lang, key = el.dataset.key;
+  if (!CONFIG.textOverrides) CONFIG.textOverrides = {};
+  if (!CONFIG.textOverrides[lang]) CONFIG.textOverrides[lang] = {};
+  if (el.value === DEFAULT_TEXTS[lang][key]){
+    delete CONFIG.textOverrides[lang][key];
+  } else {
+    CONFIG.textOverrides[lang][key] = el.value;
+  }
+}
+function saveTexts(){
+  saveConfig(CONFIG);
+  toast('Тексты сохранены');
+}
+
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+/* ---------- referral program requests ---------- */
+function loadReferralRequest(){
+  try {
+    const raw = localStorage.getItem('novayield_referral_request');
+    return raw ? JSON.parse(raw) : { status: 'none' };
+  } catch(e){ return { status: 'none' }; }
+}
+function saveReferralRequest(req){
+  localStorage.setItem('novayield_referral_request', JSON.stringify(req));
+}
+function fmtDate(iso){
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+function renderRequests(){
+  const req = loadReferralRequest();
+  const empty = document.getElementById('reqEmpty');
+  const table = document.getElementById('reqTable');
+  const body = document.getElementById('reqBody');
+  const badge = document.getElementById('reqBadge');
+
+  if (!req || req.status === 'none'){
+    empty.style.display = 'block';
+    table.style.display = 'none';
+    badge.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  badge.style.display = req.status === 'pending' ? 'inline-block' : 'none';
+  badge.textContent = req.status === 'pending' ? '1' : '0';
+
+  const statusLabel = { pending:'На рассмотрении', approved:'Одобрена', rejected:'Отклонена' }[req.status] || req.status;
+  const statusClass = { pending:'pending', approved:'active', rejected:'rejected' }[req.status] || '';
+
+  body.innerHTML = `
+    <tr>
+      <td>${req.user || '@mikhail_p'}</td>
+      <td>${fmtDate(req.requestedAt)}</td>
+      <td><span class="status-chip ${statusClass}">${statusLabel}</span></td>
+      <td>
+        <div class="req-actions">
+          <button class="approve" onclick="setReqStatus('approved')">Одобрить</button>
+          <button class="reject" onclick="setReqStatus('rejected')">Отклонить</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+function setReqStatus(status){
+  const req = loadReferralRequest();
+  req.status = status;
+  req.decidedAt = new Date().toISOString();
+  saveReferralRequest(req);
+  renderRequests();
+  toast(status === 'approved' ? 'Заявка одобрена' : 'Заявка отклонена');
+}
+setInterval(renderRequests, 3000);
+
+renderPlans();
+fillReferral();
+fillPayments();
+fillTrading();
+fillGeneral();
+renderTexts();
+renderRequests();
+</script>
+</body>
+</html>
