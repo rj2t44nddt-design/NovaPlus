@@ -98,6 +98,14 @@
   }
   .chart-wrap{margin-top:14px; height:70px;}
   .chart-wrap svg{width:100%; height:100%; display:block;}
+  #chartScroll{overflow-x:auto; -webkit-overflow-scrolling:touch; touch-action:pan-x;}
+  #chartScroll svg{height:100%; display:block;}
+  .chart-zoom-row{display:flex; justify-content:flex-end; gap:6px;}
+  .chart-zoom-row button{
+    background:var(--bg-card); border:1px solid var(--stroke); color:var(--text-mid);
+    width:30px; height:26px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; line-height:1;
+  }
+  .chart-zoom-row button:active{border-color:var(--accent-1); color:var(--accent-2);}
 
   .cta-btn{
     margin-top:16px; width:100%; border:none; cursor:pointer;
@@ -204,9 +212,11 @@
   .verif-status-val{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin-top:2px;}
   .verif-status-val.pending{color:var(--warn);}
   .verif-status-val.verified{color:var(--good);}
+  .verif-status-val.rejected{color:var(--bad);}
   .verif-badge{width:10px; height:10px; border-radius:50%; background:var(--text-low);}
   .verif-badge.pending{background:var(--warn); box-shadow:0 0 8px rgba(255,180,84,.6);}
   .verif-badge.verified{background:var(--good); box-shadow:0 0 8px rgba(63,221,166,.6);}
+  .verif-badge.rejected{background:var(--bad); box-shadow:0 0 8px rgba(255,107,107,.6);}
   .verif-upload-box{
     display:flex; flex-direction:column; align-items:center; gap:8px;
     border:1.5px dashed var(--stroke); border-radius:14px; padding:24px 14px;
@@ -221,6 +231,20 @@
   .verif-filename button{background:none; border:none; color:var(--text-low); font-size:16px; cursor:pointer; line-height:1;}
   .setting-row .lab{font-size:14px;}
   .setting-row .val{font-size:12.5px; color:var(--text-mid);}
+  .support-link{text-decoration:none; color:var(--accent-2) !important;}
+  .ref-support-line{font-size:12px; color:var(--text-low); text-align:center; margin-top:14px;}
+
+  /* ---------- blocked account overlay ---------- */
+  .blocked-overlay{
+    position:fixed; inset:0; z-index:200; background:rgba(4,4,10,.92);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .blocked-box{
+    background:var(--bg-card); border:1px solid rgba(255,107,107,.3); border-radius:20px;
+    padding:32px 24px; text-align:center; max-width:320px;
+  }
+  .blocked-title{font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700; margin:16px 0 8px; color:var(--bad);}
+  .blocked-text{font-size:13px; color:var(--text-mid); line-height:1.5; margin-bottom:20px;}
 
   /* ---------- bottom nav ---------- */
   nav{
@@ -674,8 +698,8 @@
         <div class="balance-row">
           <div>
             <div class="balance-label" data-i18n="totalBalance">Общий баланс</div>
-            <div class="balance-value"><span id="balanceMain">28 969.91</span> <span style="font-size:15px;color:var(--text-mid);">USDT</span></div>
-            <div class="balance-sub">+ 420.68 USDT (30 <span data-i18n="days">дн.</span>)</div>
+            <div class="balance-value"><span id="balanceMain">0.00</span> <span style="font-size:15px;color:var(--text-mid);">USDT</span></div>
+            <div class="balance-sub" id="balanceSub">+ 0.00 USDT (30 <span data-i18n="days">дн.</span>)</div>
           </div>
           <div class="apy-pill">APY 3.29%</div>
         </div>
@@ -723,9 +747,10 @@
         <div class="ref-intro-icon">
           <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="18" cy="8" r="2.6"/><path d="M15.5 14.8c2.6.4 4.5 2.4 4.5 5.2"/></svg>
         </div>
-        <h2 class="ref-intro-title" data-i18n="refIntroTitle">Станьте партнёром NovaYield</h2>
+        <h2 class="ref-intro-title" data-i18n="refIntroTitle">Станьте партнёром NovaPlus</h2>
         <p class="ref-intro-text" data-i18n="refIntroText">Подайте заявку на участие в реферальной программе. После одобрения администратором вам откроется персональная ссылка и статистика начислений.</p>
         <button class="cta-btn" onclick="submitReferralRequest()" data-i18n="refApplyBtn">Подать заявку</button>
+        <p class="ref-support-line" id="refSupportLine">Вопросы? Напишите <a class="support-link" href="https://t.me/novaplus_support" target="_blank" rel="noopener">@novaplus_support</a></p>
       </div>
 
       <!-- STATE: pending -->
@@ -761,12 +786,12 @@
             <div class="txt" data-i18n="refRateText">от суммы депозита каждого приглашённого — начисляется на ваш баланс</div>
           </div>
           <div class="link-box">
-            <input id="refLink" readonly value="t.me/novayield_bot?start=ref_8841kf">
+            <input id="refLink" readonly value="t.me/novaplus_bot?start=ref_8841kf">
             <button class="copy-btn" onclick="copyLink()" data-i18n="copy">Скопировать</button>
           </div>
           <div class="stat-row">
-            <div class="stat-box"><div class="n">7</div><div class="l" data-i18n="invited">Приглашено</div></div>
-            <div class="stat-box"><div class="n">612.40</div><div class="l" data-i18n="earned">Заработано, USDT</div></div>
+            <div class="stat-box"><div class="n" id="refInvitedCount">0</div><div class="l" data-i18n="invited">Приглашено</div></div>
+            <div class="stat-box"><div class="n" id="refEarnedTotal">0.00</div><div class="l" data-i18n="earned">Заработано, USDT</div></div>
           </div>
         </div>
 
@@ -827,7 +852,12 @@
         <div class="market-detail-price" id="mdPrice">64 230.50</div>
         <div class="market-detail-change" id="mdChange">+2.41%</div>
 
-        <div class="chart-wrap" style="height:150px; margin:18px 0;">
+        <div class="chart-zoom-row">
+          <button onclick="zoomChart(1/1.4)">−</button>
+          <button onclick="resetChartZoom()" id="zoomLevelBtn">1x</button>
+          <button onclick="zoomChart(1.4)">+</button>
+        </div>
+        <div class="chart-wrap" id="chartScroll" style="height:150px; margin:10px 0 18px;">
           <svg viewBox="0 0 300 140" preserveAspectRatio="none" id="mdChartSvg">
             <g id="mdGridGroup"></g>
             <g id="mdCandlesGroup"></g>
@@ -915,7 +945,7 @@
         </div>
         <div class="setting-row">
           <div class="lab" data-i18n="account">Аккаунт</div>
-          <div class="val">@mikhail_p</div>
+          <div class="val" id="settingsAccountVal">@guest</div>
         </div>
         <div class="setting-row">
           <div class="lab" data-i18n="notifications">Уведомления</div>
@@ -923,7 +953,7 @@
         </div>
         <div class="setting-row">
           <div class="lab" data-i18n="support">Поддержка</div>
-          <div class="val">@novayield_support</div>
+          <a class="val support-link" href="https://t.me/novaplus_support" target="_blank" rel="noopener">@novaplus_support</a>
         </div>
       </div>
 
@@ -972,6 +1002,15 @@
   </nav>
 
   <div class="toast" id="toast"></div>
+
+  <div class="blocked-overlay" id="blockedOverlay" style="display:none;">
+    <div class="blocked-box">
+      <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#FF6B6B" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>
+      <div class="blocked-title" data-i18n="accountBlockedTitle">Аккаунт заблокирован</div>
+      <div class="blocked-text" data-i18n="accountBlockedText">Обратитесь в поддержку, если считаете это ошибкой.</div>
+      <a class="cta-btn" style="display:inline-block; text-decoration:none;" href="https://t.me/novaplus_support" target="_blank" rel="noopener" data-i18n="support">Поддержка</a>
+    </div>
+  </div>
 
   <div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this) closeTopup()">
     <div class="sheet">
@@ -1342,9 +1381,11 @@ const dict = {
     topupTitle:"Пополнение USDT", enterAmount:"Сумма пополнения", chooseNetwork:"Сеть", feeLow:"мин. комиссия",
     continue:"Продолжить", sendExactly:"Отправьте точную сумму", depositAddress:"Адрес для пополнения",
     addrHint:"Отправляйте только USDT в выбранной сети. Средства в другой сети будут потеряны.",
-    iSent:"Я отправил(а)", back:"Назад", pendingTitle:"Ожидаем поступление",
-    pendingSub:"Обычно это занимает 1–3 подтверждения сети. Баланс обновится автоматически.",
-    done:"Готово", addrCopied:"Адрес скопирован", topupBtn:"Пополнить USDT/Банковская Карта",
+    iSent:"Я отправил(а)", back:"Назад", pendingTitle:"Заявка на проверке",
+    pendingSub:"Мы проверим поступление и зачислим средства на баланс вручную. Обычно это занимает немного времени.",
+    done:"Готово", addrCopied:"Адрес скопирован", copyFailedToast:"Не удалось скопировать, скопируйте вручную", topupBtn:"Пополнить USDT/Банковская Карта",
+    pendingReviewText:"на проверке, зачислим вручную", depositApprovedToast:"Депозит подтверждён:", depositRejectedToast:"Депозит отклонён администратором",
+    accountBlockedTitle:"Аккаунт заблокирован", accountBlockedText:"Обратитесь в поддержку, если считаете это ошибкой.",
     topupBtnShort:"Пополнить", withdrawBtn:"Вывести", withdrawTitle:"Вывод USDT", withdrawAmountLabel:"Сумма вывода",
     withdrawAddressLabel:"Адрес USDT-кошелька", withdrawAddressPlaceholder:"Введите адрес кошелька",
     withdrawNetworkLabel:"Сеть", withdrawFeeLabel:"Комиссия сети", withdrawContinue:"Продолжить",
@@ -1377,7 +1418,7 @@ const dict = {
     uahLabel:"грн", cardRangeHint:"Мин. 2 250 – макс. 29 999 грн", recipientCard:"Номер карты для перевода",
     recipientName:"Получатель", cardTransferHint:"Переведите точную сумму на указанную карту. Баланс пополнится после подтверждения перевода.",
     iTransferred:"Я перевёл(а)",
-    markets:"Рынки", navMarkets:"Рынки", today:"за сегодня", marketsDemoNote:"Крипта и золото (PAXG) — реальные цены Binance, обновляются каждые 3 секунды. Форекс и USD/UAH — официальные курсы ЕЦБ/НБУ, которые сами эти институты публикуют не чаще раза в день. Товары и биржевые индексы убраны из списка — для них нет бесплатного официального источника без платного API-ключа.",
+    markets:"Рынки", navMarkets:"Рынки", today:"за сегодня", marketsDemoNote:"Крипта и золото (PAXG) — реальные цены Binance в реальном времени (WebSocket, посекундно). Форекс и USD/UAH — официальные курсы ЕЦБ/НБУ; сами эти институты публикуют их не чаще раза в день, поэтому секундные колебания на графике — небольшие технические колебания вокруг настоящего официального курса, а не отдельные официальные котировки. Товары и биржевые индексы убраны из списка — для них нет бесплатного официального источника без платного API-ключа.",
     todayLabel:"Сегодня", minLabel:"Минимум", maxLabel:"Максимум", sellLabel:"Продать", buyLabel:"Купить", spreadLabel:"Спред",
     searchPlaceholder:"Поиск: BTC, EUR, Gold…", catAll:"Все", catCrypto:"Крипто", catForex:"Форекс", catCommodity:"Товары", catIndex:"Индексы", noResults:"Ничего не найдено",
     liveTag:"LIVE", connectingTag:"…",
@@ -1386,14 +1427,16 @@ const dict = {
     verifHint:"Загрузите фото документа, удостоверяющего личность (паспорт или ID-карта), для повышения лимитов вывода.",
     verifUploadLabel:"Загрузить документ", verifSubmitBtn:"Отправить на проверку",
     verifSubmittedToast:"Документ отправлен на проверку", verifApprovedToast:"Верификация пройдена",
+    verifRejected:"Отклонена", verifRejectedToast:"Верификация отклонена, попробуйте снова",
     verifRemoveFile:"убрать", noClosedTrades:"Нет закрытых сделок", historyTab:"История", closedAt:"Закрыта",
-    refIntroTitle:"Станьте партнёром NovaYield",
+    refIntroTitle:"Станьте партнёром NovaPlus",
     refIntroText:"Подайте заявку на участие в реферальной программе. После одобрения администратором вам откроется персональная ссылка и статистика начислений.",
     refApplyBtn:"Подать заявку", refPendingStatus:"На рассмотрении",
     refPendingText:"Заявка отправлена. Как только администратор её одобрит, здесь появится реферальная ссылка.",
     refRejectedStatus:"Отклонена", refRejectedText:"Заявку отклонили. Вы можете подать повторно.",
     refReapplyBtn:"Подать заявку снова", refRequestSentToast:"Заявка отправлена", refApprovedToast:"Заявка одобрена! Ссылка доступна",
-    tierTableTitle:"Уровни вознаграждения", invitedShort:"приглаш.",
+    refSupportQuestion:"Вопросы? Напишите",
+    tierTableTitle:"Уровни вознаграждения", invitedShort:"приглаш.", noInviteesYet:"Пока никого не пригласили",
     langNames:{ru:"Русский", uk:"Українська"}
   },
   uk:{
@@ -1409,9 +1452,11 @@ const dict = {
     topupTitle:"Поповнення USDT", enterAmount:"Сума поповнення", chooseNetwork:"Мережа", feeLow:"мін. комісія",
     continue:"Продовжити", sendExactly:"Надішліть точну суму", depositAddress:"Адреса для поповнення",
     addrHint:"Надсилайте лише USDT в обраній мережі. Кошти в іншій мережі буде втрачено.",
-    iSent:"Я надіслав(ла)", back:"Назад", pendingTitle:"Очікуємо надходження",
-    pendingSub:"Зазвичай це займає 1–3 підтвердження мережі. Баланс оновиться автоматично.",
-    done:"Готово", addrCopied:"Адресу скопійовано", topupBtn:"Поповнити USDT/Банківська Картка",
+    iSent:"Я надіслав(ла)", back:"Назад", pendingTitle:"Заявку на перевірці",
+    pendingSub:"Ми перевіримо надходження і зарахуємо кошти на баланс вручну. Зазвичай це займає трохи часу.",
+    done:"Готово", addrCopied:"Адресу скопійовано", copyFailedToast:"Не вдалося скопіювати, скопіюйте вручну", topupBtn:"Поповнити USDT/Банківська Картка",
+    pendingReviewText:"на перевірці, зарахуємо вручну", depositApprovedToast:"Депозит підтверджено:", depositRejectedToast:"Депозит відхилено адміністратором",
+    accountBlockedTitle:"Акаунт заблоковано", accountBlockedText:"Зверніться до підтримки, якщо вважаєте це помилкою.",
     topupBtnShort:"Поповнити", withdrawBtn:"Вивести", withdrawTitle:"Виведення USDT", withdrawAmountLabel:"Сума виведення",
     withdrawAddressLabel:"Адреса USDT-гаманця", withdrawAddressPlaceholder:"Введіть адресу гаманця",
     withdrawNetworkLabel:"Мережа", withdrawFeeLabel:"Комісія мережі", withdrawContinue:"Продовжити",
@@ -1444,7 +1489,7 @@ const dict = {
     uahLabel:"грн", cardRangeHint:"Мін. 2 250 – макс. 29 999 грн", recipientCard:"Номер картки для переказу",
     recipientName:"Отримувач", cardTransferHint:"Переведіть точну суму на вказану картку. Баланс поповниться після підтвердження переказу.",
     iTransferred:"Я переказав(ла)",
-    markets:"Ринки", navMarkets:"Ринки", today:"за сьогодні", marketsDemoNote:"Крипта і золото (PAXG) — реальні ціни Binance, оновлюються кожні 3 секунди. Форекс і USD/UAH — офіційні курси ЄЦБ/НБУ, які самі ці установи публікують не частіше разу на день. Товари та біржові індекси прибрано зі списку — для них немає безкоштовного офіційного джерела без платного API-ключа.",
+    markets:"Ринки", navMarkets:"Ринки", today:"за сьогодні", marketsDemoNote:"Крипта і золото (PAXG) — реальні ціни Binance у реальному часі (WebSocket, щосекунди). Форекс і USD/UAH — офіційні курси ЄЦБ/НБУ; самі ці установи публікують їх не частіше разу на день, тому секундні коливання на графіку — невеликі технічні коливання навколо справжнього офіційного курсу, а не окремі офіційні котирування. Товари та біржові індекси прибрано зі списку — для них немає безкоштовного офіційного джерела без платного API-ключа.",
     todayLabel:"Сьогодні", minLabel:"Мінімум", maxLabel:"Максимум", sellLabel:"Продати", buyLabel:"Купити", spreadLabel:"Спред",
     searchPlaceholder:"Пошук: BTC, EUR, Gold…", catAll:"Всі", catCrypto:"Крипто", catForex:"Форекс", catCommodity:"Товари", catIndex:"Індекси", noResults:"Нічого не знайдено",
     liveTag:"LIVE", connectingTag:"…",
@@ -1453,14 +1498,16 @@ const dict = {
     verifHint:"Завантажте фото документа, що посвідчує особу (паспорт або ID-картка), для підвищення лімітів виведення.",
     verifUploadLabel:"Завантажити документ", verifSubmitBtn:"Надіслати на перевірку",
     verifSubmittedToast:"Документ надіслано на перевірку", verifApprovedToast:"Верифікацію пройдено",
+    verifRejected:"Відхилена", verifRejectedToast:"Верифікацію відхилено, спробуйте ще раз",
     verifRemoveFile:"прибрати", noClosedTrades:"Немає закритих угод", historyTab:"Історія", closedAt:"Закрита",
-    refIntroTitle:"Станьте партнером NovaYield",
+    refIntroTitle:"Станьте партнером NovaPlus",
     refIntroText:"Подайте заявку на участь у реферальній програмі. Після схвалення адміністратором вам відкриється персональне посилання та статистика нарахувань.",
     refApplyBtn:"Подати заявку", refPendingStatus:"На розгляді",
     refPendingText:"Заявку надіслано. Щойно адміністратор її схвалить, тут з'явиться реферальне посилання.",
     refRejectedStatus:"Відхилена", refRejectedText:"Заявку відхилено. Ви можете подати повторно.",
     refReapplyBtn:"Подати заявку знову", refRequestSentToast:"Заявку надіслано", refApprovedToast:"Заявку схвалено! Посилання доступне",
-    tierTableTitle:"Рівні винагороди", invitedShort:"запрош.",
+    refSupportQuestion:"Питання? Напишіть",
+    tierTableTitle:"Рівні винагороди", invitedShort:"запрош.", noInviteesYet:"Поки нікого не запросили",
     langNames:{ru:"Русский", uk:"Українська"}
   }
 };
@@ -1476,17 +1523,17 @@ const DEFAULT_CONFIG = {
     {min:10, max:19, rate:20},
     {min:20, max:29, rate:30},
     {min:30, max:49, rate:40},
-    {min:50, max:null, rate:50},
+    {min:50, max:null, rate:65},
   ],
-  refLink: "t.me/novayield_bot?start=ref_8841kf",
+  refLink: "t.me/novaplus_bot?start=ref_8841kf",
   cryptoAddresses: { TRC20:"TXk9s...4fQ2m", ERC20:"0x8f2a...91cE", BEP20:"0x8f2a...91cE" },
   cardNumber: "4441 1149 9911 2233",
   cardHolder: "IVAN PETRENKO",
   uahMin: 2250,
   uahMax: 29999,
   uahRate: 45,
-  brandName: "NovaYield",
-  startingBalance: 28969.91,
+  brandName: "NovaPlus",
+  startingBalance: 0,
   withdrawFee: 1.0,
   tradingSpreadPct: 0.015,
   maxLeverage: 100,
@@ -1512,20 +1559,218 @@ if (CONFIG.textOverrides){
   });
 }
 
-/* ---------- referral program access request (shared with admin panel via localStorage) ---------- */
-function loadReferralRequest(){
+/* ---------- Telegram identity: each real Telegram account gets its own isolated
+   account (balance, stakes, trades, verification) instead of everyone sharing one
+   pre-loaded demo state. Opening outside Telegram falls back to a local "guest"
+   account — still starts fresh at 0, never pre-filled. ---------- */
+function getTelegramUser(){
   try {
-    const raw = localStorage.getItem('novayield_referral_request');
-    return raw ? JSON.parse(raw) : { status: 'none' };
-  } catch(e){ return { status: 'none' }; }
+    return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) || null;
+  } catch(e){ return null; }
+}
+const tgUser = getTelegramUser();
+const currentUserId = tgUser ? ('tg_' + tgUser.id) : 'guest';
+const currentUserDisplayName = tgUser
+  ? ('@' + (tgUser.username || (tgUser.first_name || '').toLowerCase() || tgUser.id))
+  : '@guest';
+
+function personalizedRefLink(){
+  const base = (CONFIG.refLink || '').split('?')[0];
+  const code = tgUser ? tgUser.id : currentUserId;
+  return base + '?start=ref_' + code;
+}
+function freshAccount(){
+  return {
+    balance: CONFIG.startingBalance,
+    activeStakes: [],
+    activeTrades: [],
+    closedTrades: [],
+    verifState: 'none',
+  };
+}
+function loadAccount(userId){
+  try {
+    const raw = localStorage.getItem('novayield_account_' + userId);
+    if (!raw) return freshAccount();
+    const saved = JSON.parse(raw);
+    return Object.assign(freshAccount(), saved);
+  } catch(e){ return freshAccount(); }
+}
+function saveAccount(){
+  const data = {
+    balance: availableBalance,
+    activeStakes,
+    activeTrades,
+    closedTrades,
+    verifState,
+    blocked: accountBlockedFlag,
+  };
+  localStorage.setItem('novayield_account_' + currentUserId, JSON.stringify(data));
+}
+const isNewAccount = !localStorage.getItem('novayield_account_' + currentUserId);
+const accountData = loadAccount(currentUserId);
+let accountBlockedFlag = accountData.blocked || false;
+
+/* ---------- referral tracking: who invited whom, and how much they earned ---------- */
+function getStartParam(){
+  try {
+    return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param) || null;
+  } catch(e){ return null; }
+}
+function loadReferrals(){
+  try {
+    const raw = localStorage.getItem('novayield_referrals');
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){ return {}; }
+}
+function saveReferrals(map){
+  localStorage.setItem('novayield_referrals', JSON.stringify(map));
+}
+function registerReferralIfAny(){
+  const sp = getStartParam();
+  if (!sp || !sp.startsWith('ref_')) return;
+  const referrerId = 'tg_' + sp.slice(4);
+  if (referrerId === currentUserId) return; // no self-referral
+  const refs = loadReferrals();
+  if (refs[currentUserId]) return; // already registered
+  refs[currentUserId] = {
+    referrerId,
+    refereeDisplayName: currentUserDisplayName,
+    joinedAt: new Date().toISOString(),
+    totalDeposited: 0,
+    bonusEarned: 0,
+  };
+  saveReferrals(refs);
+}
+if (isNewAccount) registerReferralIfAny();
+
+// Called whenever this user tops up their balance — credits their referrer (if any) a % of the deposit
+function creditReferrerForDeposit(depositUsdt){
+  if (!depositUsdt || depositUsdt <= 0) return;
+  const refs = loadReferrals();
+  const myEntry = refs[currentUserId];
+  if (!myEntry) return; // this account wasn't referred by anyone
+  const referrerId = myEntry.referrerId;
+  const referrerInvitedCount = Object.values(refs).filter(r=>r.referrerId===referrerId).length;
+  const rate = referralRateFor(referrerInvitedCount);
+  const bonus = depositUsdt * (rate/100);
+  myEntry.totalDeposited = (myEntry.totalDeposited||0) + depositUsdt;
+  myEntry.bonusEarned = (myEntry.bonusEarned||0) + bonus;
+  saveReferrals(refs);
+  // credit the referrer's stored balance directly, even if they're offline right now
+  const key = 'novayield_account_' + referrerId;
+  try {
+    const raw = localStorage.getItem(key);
+    const acc = raw ? JSON.parse(raw) : freshAccount();
+    acc.balance = (acc.balance||0) + bonus;
+    localStorage.setItem(key, JSON.stringify(acc));
+    if (referrerId === currentUserId){ availableBalance = acc.balance; } // reflect immediately if it's somehow the same session
+  } catch(e){ /* ignore */ }
+}
+function myReferrals(){
+  const refs = loadReferrals();
+  return Object.values(refs).filter(r=>r.referrerId===currentUserId);
+}
+
+/* ---------- deposits go to a moderation queue instead of crediting instantly ---------- */
+let depositIdSeq = Date.now();
+function loadPendingDeposits(){
+  try {
+    const raw = localStorage.getItem('novayield_pending_deposits');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
+}
+function savePendingDeposits(list){
+  localStorage.setItem('novayield_pending_deposits', JSON.stringify(list));
+}
+function submitPendingDeposit(amountUsdt, method, extra){
+  const list = loadPendingDeposits();
+  const entry = {
+    id: depositIdSeq++,
+    userId: currentUserId,
+    displayName: currentUserDisplayName,
+    amount: amountUsdt,
+    method, // 'crypto' | 'card'
+    extra: extra || '',
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+  };
+  list.push(entry);
+  savePendingDeposits(list);
+  return entry;
+}
+let lastKnownDepositStatuses = {};
+function pollMyDeposits(){
+  const list = loadPendingDeposits();
+  list.filter(d=>d.userId===currentUserId).forEach(d=>{
+    const prev = lastKnownDepositStatuses[d.id];
+    if (prev === undefined){ lastKnownDepositStatuses[d.id] = d.status; return; }
+    if (prev !== d.status){
+      lastKnownDepositStatuses[d.id] = d.status;
+      if (d.status === 'approved') toast(t('depositApprovedToast') + ' +' + fmt(d.amount) + ' USDT');
+      if (d.status === 'rejected') toast(t('depositRejectedToast'));
+    }
+  });
+}
+// Detects balance/blocked-state changes made from the admin panel (e.g. manual balance
+// edit, deposit approval, block toggle) and refreshes this session without reloading.
+function pollOwnAccount(){
+  try {
+    const raw = localStorage.getItem('novayield_account_' + currentUserId);
+    if (!raw) return;
+    const acc = JSON.parse(raw);
+    if (typeof acc.balance === 'number' && acc.balance !== availableBalance){
+      availableBalance = acc.balance;
+      const el = document.getElementById('balanceMain');
+      if (el) el.textContent = fmt(availableBalance);
+    }
+    if (acc.blocked && !isBlockedShown) showBlockedOverlay();
+    if (!acc.blocked && isBlockedShown) hideBlockedOverlay();
+    accountBlockedFlag = !!acc.blocked;
+    if (acc.verifState && acc.verifState !== verifState){
+      const wasPending = verifState === 'pending';
+      verifState = acc.verifState;
+      renderVerifStatus();
+      if (wasPending && verifState === 'verified') toast(t('verifApprovedToast'));
+      if (wasPending && verifState === 'rejected') toast(t('verifRejectedToast'));
+    }
+  } catch(e){ /* ignore */ }
+}
+let isBlockedShown = false;
+function showBlockedOverlay(){
+  isBlockedShown = true;
+  const el = document.getElementById('blockedOverlay');
+  if (el) el.style.display = 'flex';
+}
+function hideBlockedOverlay(){
+  isBlockedShown = false;
+  const el = document.getElementById('blockedOverlay');
+  if (el) el.style.display = 'none';
+}
+
+/* ---------- referral program access requests, keyed per Telegram user ---------- */
+function loadReferralRequests(){
+  try {
+    const raw = localStorage.getItem('novayield_referral_requests');
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){ return {}; }
+}
+function saveReferralRequests(map){
+  localStorage.setItem('novayield_referral_requests', JSON.stringify(map));
+}
+function loadReferralRequest(){
+  const map = loadReferralRequests();
+  return map[currentUserId] || { status: 'none' };
 }
 function saveReferralRequest(req){
-  localStorage.setItem('novayield_referral_request', JSON.stringify(req));
+  const map = loadReferralRequests();
+  map[currentUserId] = req;
+  saveReferralRequests(map);
 }
 let referralRequest = loadReferralRequest();
 let lastKnownRefStatus = referralRequest.status;
 function submitReferralRequest(){
-  referralRequest = { status: 'pending', user: '@mikhail_p', requestedAt: new Date().toISOString() };
+  referralRequest = { status: 'pending', user: currentUserDisplayName, requestedAt: new Date().toISOString() };
   saveReferralRequest(referralRequest);
   lastKnownRefStatus = 'pending';
   renderReferralState();
@@ -1537,6 +1782,8 @@ function renderReferralState(){
   document.getElementById('refStatePending').style.display = s==='pending' ? 'block' : 'none';
   document.getElementById('refStateRejected').style.display = s==='rejected' ? 'block' : 'none';
   document.getElementById('refStateApproved').style.display = s==='approved' ? 'block' : 'none';
+  const supportLine = document.getElementById('refSupportLine');
+  if (supportLine) supportLine.innerHTML = t('refSupportQuestion') + ' <a class="support-link" href="https://t.me/novaplus_support" target="_blank" rel="noopener">@novaplus_support</a>';
 }
 function pollReferralRequest(){
   const fresh = loadReferralRequest();
@@ -1548,13 +1795,11 @@ function pollReferralRequest(){
   }
 }
 setInterval(pollReferralRequest, 2000);
+setInterval(pollMyDeposits, 2000);
+setInterval(pollOwnAccount, 2000);
+pollOwnAccount();
 
-const inviteesData = [
-  {name:"Olena K.", dep:1200, when:"3d"},
-  {name:"Dmitry V.", dep:840, when:"6d"},
-  {name:"Anna S.", dep:2500, when:"11d"},
-  {name:"Ihor P.", dep:300, when:"18d"},
-];
+const inviteesData = [];
 
 function referralRateFor(count){
   if (count < 1) return 0;
@@ -1579,11 +1824,12 @@ function render(){
     if (dict[lang][key]) el.placeholder = dict[lang][key];
   });
   document.getElementById('settingsLangVal').textContent = dict[lang].langNames[lang];
-  document.getElementById('refRateNum').textContent = referralRateFor(inviteesData.length) + '%';
-  document.getElementById('refLink').value = CONFIG.refLink;
+  document.getElementById('settingsAccountVal').textContent = currentUserDisplayName;
+  document.getElementById('refRateNum').textContent = referralRateFor(myReferrals().length) + '%';
+  document.getElementById('refLink').value = personalizedRefLink();
   document.getElementById('balanceMain').textContent = fmt(availableBalance);
   document.querySelectorAll('.brand .word').forEach(el=>{
-    const name = CONFIG.brandName || 'NovaYield';
+    const name = CONFIG.brandName || 'NovaPlus';
     const splitAt = Math.ceil(name.length/2);
     el.innerHTML = name.slice(0,splitAt) + '<b>' + name.slice(splitAt) + '</b>';
   });
@@ -1619,27 +1865,38 @@ function render(){
   renderHistory();
   renderReferralState();
 
-  // invitees
+  // invitees (real referrals, tracked via the ?start=ref_<id> deep link)
   const list = document.getElementById('inviteesList');
   list.innerHTML = '';
-  const currentRate = referralRateFor(inviteesData.length);
-  inviteesData.forEach(inv=>{
-    const bonus = (inv.dep*(currentRate/100)).toFixed(2);
-    const row = document.createElement('div');
-    row.className = 'invitee';
-    row.innerHTML = `
-      <div><div class="name">${inv.name}</div><div class="sub">${inv.dep} USDT · ${inv.when}</div></div>
-      <div class="bonus">+${bonus}</div>
-    `;
-    list.appendChild(row);
-  });
+  const myRefs = myReferrals();
+  const totalEarned = myRefs.reduce((sum, r)=> sum + (r.bonusEarned||0), 0);
+  myRefs
+    .slice()
+    .sort((a,b)=> new Date(b.joinedAt) - new Date(a.joinedAt))
+    .forEach(r=>{
+      const row = document.createElement('div');
+      row.className = 'invitee';
+      const joined = new Date(r.joinedAt).toLocaleDateString(lang==='uk'?'uk-UA':'ru-RU', {day:'2-digit', month:'2-digit'});
+      row.innerHTML = `
+        <div><div class="name">${r.refereeDisplayName}</div><div class="sub">${fmt(r.totalDeposited||0)} USDT · ${joined}</div></div>
+        <div class="bonus">+${fmt(r.bonusEarned||0)}</div>
+      `;
+      list.appendChild(row);
+    });
+  const invCountEl = document.getElementById('refInvitedCount');
+  const earnedEl = document.getElementById('refEarnedTotal');
+  if (invCountEl) invCountEl.textContent = myRefs.length;
+  if (earnedEl) earnedEl.textContent = totalEarned.toFixed(2);
+  if (myRefs.length === 0){
+    list.innerHTML = `<div class="hint-note" style="text-align:center; padding:6px 0;">${t('noInviteesYet')}</div>`;
+  }
 
   // referral tier table
   const tierList = document.getElementById('refTierList');
   if (tierList){
     tierList.innerHTML = CONFIG.referralTiers.map(tr=>{
       const rangeTxt = tr.max === null ? `${tr.min}+` : `${tr.min}–${tr.max}`;
-      const isCurrent = inviteesData.length >= tr.min && (tr.max === null || inviteesData.length <= tr.max);
+      const isCurrent = myRefs.length >= tr.min && (tr.max === null || myRefs.length <= tr.max);
       return `<div class="tier-row${isCurrent ? ' current' : ''}"><span>${rangeTxt} ${t('invitedShort')}</span><b>${tr.rate}%</b></div>`;
     }).join('');
   }
@@ -1664,9 +1921,32 @@ document.getElementById('bottomNav').addEventListener('click', e=>{
 
 function copyLink(){
   const input = document.getElementById('refLink');
-  input.select();
-  navigator.clipboard?.writeText(input.value).catch(()=>{});
-  toast(t('copiedToast'));
+  copyToClipboard(input.value, t('copiedToast'));
+}
+function copyToClipboard(text, successMsg){
+  const done = (ok)=>{ toast(ok ? successMsg : t('copyFailedToast')); };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>done(true)).catch(()=>done(fallbackCopy(text)));
+  } else {
+    done(fallbackCopy(text));
+  }
+}
+function fallbackCopy(text){
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch(e){ return false; }
 }
 
 /* ---------- top-up sheet ---------- */
@@ -1747,6 +2027,7 @@ function goToWithdrawAddress(){
 function confirmWithdraw(){
   availableBalance -= (withdrawAmountVal + WITHDRAW_FEE);
   document.getElementById('balanceMain').textContent = fmt(availableBalance);
+  saveAccount();
   showStep('withdraw-success');
 }
 function cardRangeText(){
@@ -1835,11 +2116,13 @@ function goToAddress(){
   showStep('address');
 }
 function backToAmount(){ showStep('amount'); }
-function confirmSent(){ showStep('success'); }
+function confirmSent(){
+  submitPendingDeposit(selectedAmount, 'crypto', selectedNet);
+  showStep('success');
+}
 function copyAddr(){
   const el = document.getElementById('depositAddr');
-  navigator.clipboard?.writeText(el.value).catch(()=>{});
-  toast(t('addrCopied'));
+  copyToClipboard(el.value, t('addrCopied'));
 }
 
 /* ---------- card payment (manual transfer to recipient card) ---------- */
@@ -1852,18 +2135,16 @@ function goToCardDetails(){
 }
 function copyCardNumber(){
   const el = document.getElementById('cardNumberDisplay');
-  navigator.clipboard?.writeText(el.value.replace(/\s/g,'')).catch(()=>{});
-  toast(t('addrCopied'));
+  copyToClipboard(el.value.replace(/\s/g,''), t('addrCopied'));
 }
 function payWithCard(){
   showStep('card-processing');
   setTimeout(()=>{
     const rate = CONFIG.uahRate; // demo UAH→USDT rate
     const creditedUsdt = selectedAmount / rate;
-    availableBalance += creditedUsdt;
-    document.getElementById('balanceMain').textContent = fmt(availableBalance);
+    submitPendingDeposit(creditedUsdt, 'card', selectedAmount.toLocaleString('uk-UA') + ' ' + t('uahLabel'));
     document.getElementById('cardSuccessSub').textContent =
-      '+' + fmt(creditedUsdt) + ' USDT (' + selectedAmount.toLocaleString('uk-UA') + ' ' + t('uahLabel') + ') ' + t('creditedText');
+      fmt(creditedUsdt) + ' USDT (' + selectedAmount.toLocaleString('uk-UA') + ' ' + t('uahLabel') + ') ' + t('pendingReviewText');
     showStep('card-success');
   }, 1600);
 }
@@ -1889,8 +2170,8 @@ function drawFakeQr(){
 }
 
 /* ---------- staking sheet ---------- */
-let availableBalance = CONFIG.startingBalance;
-let activeStakes = [];
+let availableBalance = accountData.balance;
+let activeStakes = accountData.activeStakes.map(s=>({...s, unlock: new Date(s.unlock)}));
 let currentPlan = null;
 let stakeAmountVal = 0;
 
@@ -1947,6 +2228,7 @@ function confirmStake(){
   document.getElementById('balanceMain').textContent = fmt(availableBalance);
   activeStakes.push({ amount:stakeAmountVal, days:p.days, apy:p.apy, earn, unlock, progress:2 });
   renderActiveStakes();
+  saveAccount();
   document.getElementById('stakeSuccessSub').textContent = p.days + ' ' + daysWord(p.days) + ' · ' + p.apy + '% APY';
   showStep('stake-success');
 }
@@ -1976,7 +2258,7 @@ function renderActiveStakes(){
 }
 
 /* ---------- trading (open/close positions, TP/SL) ---------- */
-let activeTrades = [];
+let activeTrades = accountData.activeTrades;
 let tradeDirection = 'buy';
 let tradeLeverage = 1;
 let tradeIdSeq = 1;
@@ -2098,6 +2380,7 @@ function confirmOpenTrade(){
   });
   closeTopup();
   renderPositionsAll();
+  saveAccount();
   toast((tradeDirection==='buy' ? t('buyLabel') : t('sellLabel')) + ' · ' + m.pair + ' ' + t('positionOpenedToast'));
 }
 function calcPnl(tr){
@@ -2124,6 +2407,7 @@ function closeTradePct(id, pct){
   toast(t('positionClosedToast'));
   renderPositionsAll();
   renderHistory();
+  saveAccount();
 }
 function onCloseSliderInput(id){
   const val = document.getElementById('closeSlider-'+id).value;
@@ -2200,6 +2484,7 @@ function saveTradeEdit(){
   tr.sl = isNaN(slVal) ? null : slVal;
   closeTopup();
   renderPositionsAll();
+  saveAccount();
   toast(t('changesSavedToast'));
 }
 function checkTpSl(){
@@ -2230,6 +2515,7 @@ function checkTpSl(){
     document.getElementById('balanceMain').textContent = fmt(availableBalance);
     renderPositionsAll();
     renderHistory();
+    saveAccount();
   }
 }
 function positionCardHtml(tr){
@@ -2377,11 +2663,61 @@ function setWsStatus(text, cls){
   el.textContent = text;
   el.className = 'ws-status' + (cls ? ' '+cls : '');
 }
-// NOTE: a raw WebSocket to Binance throws "The operation is insecure" when the
-// page is opened as a local file:// (Safari/WebKit blocks WS from that origin).
-// Plain HTTPS fetch() is not affected by that restriction, so we poll Binance's
-// public REST ticker endpoint instead — still real exchange data, just pull-based.
+
+/* Real per-second crypto feed via Binance WebSocket. On a real https:// host (like
+   GitHub Pages) this works directly. If it can't connect for any reason we fall
+   back to polling Binance's REST endpoint every 3s so prices don't just freeze. */
+let binanceWS = null;
+let binanceReconnectDelay = 2000;
+let wsConnected = false;
+let restFallbackInterval = null;
+function connectBinanceWS(){
+  setWsStatus('Подключение к Binance…');
+  const streams = Object.values(BINANCE_SYMBOL).map(s=>`${s}@ticker`).join('/');
+  try {
+    binanceWS = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+  } catch(e){ startRestFallback(); return; }
+  const connectTimeout = setTimeout(()=>{ if (!wsConnected) { try{binanceWS.close();}catch(e){} } }, 4000);
+  binanceWS.onopen = ()=>{
+    wsConnected = true;
+    binanceReconnectDelay = 2000;
+    clearTimeout(connectTimeout);
+    if (restFallbackInterval){ clearInterval(restFallbackInterval); restFallbackInterval = null; }
+    setWsStatus('Подключено к Binance, ждём первый тик…', 'ok');
+  };
+  binanceWS.onmessage = (event)=>{
+    try {
+      const msg = JSON.parse(event.data);
+      const d = msg && msg.data;
+      if (!d || !d.s) return;
+      const id = SYMBOL_TO_ID[d.s.toLowerCase()];
+      if (!id) return;
+      const m = marketsData.find(x=>x.id===id);
+      if (!m) return;
+      m.price = parseFloat(d.c);
+      m.change = parseFloat(d.P);
+      m.dayOpen = parseFloat(d.o);
+      m.live = true;
+      lastTickAt = new Date();
+      setWsStatus('Live (Binance WS) · ' + lastTickAt.toLocaleTimeString('ru-RU'), 'ok');
+      updateLiveDisplays();
+    } catch(e){ /* ignore malformed frame */ }
+  };
+  binanceWS.onerror = ()=>{ try{ binanceWS.close(); }catch(e){} };
+  binanceWS.onclose = ()=>{
+    wsConnected = false;
+    if (!restFallbackInterval) startRestFallback();
+    setTimeout(connectBinanceWS, binanceReconnectDelay);
+    binanceReconnectDelay = Math.min(binanceReconnectDelay*1.5, 20000);
+  };
+}
+function startRestFallback(){
+  setWsStatus('WS недоступен, обновляю через REST…', 'err');
+  fetchBinanceTickers();
+  restFallbackInterval = setInterval(fetchBinanceTickers, 3000);
+}
 async function fetchBinanceTickers(){
+  if (wsConnected) return; // WS already delivering live ticks — no need to also poll
   const symbols = Object.values(BINANCE_SYMBOL).map(s=>s.toUpperCase());
   const symbolsParam = encodeURIComponent(JSON.stringify(symbols));
   try {
@@ -2400,7 +2736,7 @@ async function fetchBinanceTickers(){
       m.live = true;
     });
     lastTickAt = new Date();
-    setWsStatus('Live (Binance) · обновлено ' + lastTickAt.toLocaleTimeString('ru-RU'), 'ok');
+    setWsStatus('Live (Binance REST) · ' + lastTickAt.toLocaleTimeString('ru-RU'), 'ok');
     updateLiveDisplays();
   } catch(e){
     setWsStatus('Ошибка запроса к Binance: ' + e.message, 'err');
@@ -2424,6 +2760,15 @@ async function fetchUsdtLive(){
     updateLiveDisplays();
   } catch(e){ /* stays not-yet-live until next attempt */ }
 }
+
+/* Forex & USD/UAH: EUR/GBP/etc. are official rates (ECB via Frankfurter, NBU) and
+   those institutions only publish once per business day — there is no free source
+   that ticks every second because the real number itself doesn't change that often.
+   We fetch the true official rate as the anchor (dayOpen + rate), then apply a tiny
+   synthetic jitter every second around that real anchor so the UI visibly "breathes"
+   like a live market — clearly still anchored to the real published rate, not a
+   fabricated one. */
+let forexAnchors = {}; // id -> real official rate fetched from the API
 async function fetchForexLive(){
   try {
     const today = new Date();
@@ -2447,9 +2792,9 @@ async function fetchForexLive(){
       if (FOREX_INVERTED.has(id)){ priceNow = 1/rateNow; priceOpen = 1/rateOpen; }
       else if (FOREX_DIRECT.has(id)){ priceNow = rateNow; priceOpen = rateOpen; }
       else return;
-      m.price = priceNow;
+      forexAnchors[id] = priceNow;
       m.dayOpen = priceOpen;
-      m.change = ((priceNow - priceOpen)/priceOpen)*100;
+      if (!m.live) m.price = priceNow;
       m.live = true;
     });
     updateLiveDisplays();
@@ -2465,11 +2810,22 @@ async function fetchUahLive(){
     const m = marketsData.find(x=>x.id==='uah');
     if (!m) return;
     if (!m.live) m.dayOpen = m.price;
-    m.price = rate;
-    m.change = ((m.price - m.dayOpen)/m.dayOpen)*100;
+    forexAnchors.uah = rate;
+    if (!m.live) m.price = rate;
     m.live = true;
     updateLiveDisplays();
   } catch(e){ /* stays not-yet-live until next attempt */ }
+}
+function tickForexJitter(){
+  Object.keys(forexAnchors).forEach(id=>{
+    const m = marketsData.find(x=>x.id===id);
+    if (!m || !m.live) return;
+    const anchor = forexAnchors[id];
+    const jitter = (Math.random()-0.5) * anchor * 0.00012; // tiny wobble around the real rate
+    m.price = anchor + jitter;
+    m.change = ((m.price - m.dayOpen)/m.dayOpen)*100;
+  });
+  updateLiveDisplays();
 }
 
 function updateLiveDisplays(){
@@ -2497,14 +2853,14 @@ function updateLiveDisplays(){
     if (document.getElementById('screen-portfolio').classList.contains('active')) renderPositionsAll();
   }
 }
-fetchBinanceTickers();
-setInterval(fetchBinanceTickers, 3000);
+connectBinanceWS();
 fetchUsdtLive();
 fetchForexLive();
 fetchUahLive();
 setInterval(fetchUsdtLive, 20000);
 setInterval(fetchForexLive, 60000);
 setInterval(fetchUahLive, 60000);
+setInterval(tickForexJitter, 1000);
 
 function hueFromId(id){
   let h = 0;
@@ -2737,9 +3093,54 @@ function renderMarketsList(){
     filtered.forEach(m=> list.appendChild(marketRowHtml(m)));
   }
 }
+/* ---------- chart zoom (buttons + pinch) ---------- */
+let chartZoomLevel = 1;
+const CHART_MIN_ZOOM = 0.6, CHART_MAX_ZOOM = 5;
+function applyChartZoomWidth(){
+  const svg = document.getElementById('mdChartSvg');
+  const scroll = document.getElementById('chartScroll');
+  if (!svg || !scroll) return;
+  const baseWidth = scroll.clientWidth || 300;
+  svg.style.width = (baseWidth * chartZoomLevel) + 'px';
+  document.getElementById('zoomLevelBtn').textContent = chartZoomLevel.toFixed(1) + 'x';
+}
+function zoomChart(factor){
+  chartZoomLevel = Math.min(CHART_MAX_ZOOM, Math.max(CHART_MIN_ZOOM, chartZoomLevel * factor));
+  applyChartZoomWidth();
+}
+function resetChartZoom(){
+  chartZoomLevel = 1;
+  applyChartZoomWidth();
+  document.getElementById('chartScroll').scrollLeft = 0;
+}
+(function setupPinchZoom(){
+  const scroll = document.getElementById('chartScroll');
+  if (!scroll) return;
+  let pinchStartDist = null, pinchStartZoom = 1;
+  scroll.addEventListener('touchstart', e=>{
+    if (e.touches.length === 2){
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchStartDist = Math.sqrt(dx*dx + dy*dy);
+      pinchStartZoom = chartZoomLevel;
+    }
+  }, {passive:true});
+  scroll.addEventListener('touchmove', e=>{
+    if (e.touches.length === 2 && pinchStartDist){
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      chartZoomLevel = Math.min(CHART_MAX_ZOOM, Math.max(CHART_MIN_ZOOM, pinchStartZoom * (dist/pinchStartDist)));
+      applyChartZoomWidth();
+    }
+  }, {passive:true});
+  scroll.addEventListener('touchend', ()=>{ pinchStartDist = null; });
+})();
+
 function openMarket(m){
   currentMarket = m;
   currentTf = '1D';
+  chartZoomLevel = 1;
   document.getElementById('marketsListWrap').style.display = 'none';
   document.getElementById('tradesOverviewWrap').style.display = 'none';
   document.getElementById('historyWrap').style.display = 'none';
@@ -2777,6 +3178,7 @@ function renderMarketChart(){
 
   // --- candlestick chart ---
   const W = 300, H = 140;
+  applyChartZoomWidth();
   const lows = candles.map(c=>c.low), highs = candles.map(c=>c.high);
   let min = Math.min(...lows), max = Math.max(...highs);
   const pad = (max-min) * 0.08 || max*0.01;
@@ -2867,7 +3269,7 @@ document.getElementById('tfRow').addEventListener('click', e=>{
 
 let toastTimer;
 /* ---------- verification (KYC) ---------- */
-let verifState = 'none'; // none | pending | verified
+let verifState = accountData.verifState; // none | pending | verified
 let verifFile = null;
 function onVerifFileSelected(e){
   const file = e.target.files[0];
@@ -2889,27 +3291,24 @@ function renderVerifStatus(){
   const val = document.getElementById('verifStatusVal');
   const badge = document.getElementById('verifBadge');
   const uploadBlock = document.getElementById('verifUploadBlock');
-  val.className = 'verif-status-val ' + (verifState==='pending' ? 'pending' : verifState==='verified' ? 'verified' : '');
-  badge.className = 'verif-badge ' + (verifState==='pending' ? 'pending' : verifState==='verified' ? 'verified' : '');
+  val.className = 'verif-status-val ' + (verifState==='pending' ? 'pending' : verifState==='verified' ? 'verified' : verifState==='rejected' ? 'rejected' : '');
+  badge.className = 'verif-badge ' + (verifState==='pending' ? 'pending' : verifState==='verified' ? 'verified' : verifState==='rejected' ? 'rejected' : '');
   if (verifState==='none') val.textContent = t('verifNotStarted');
   if (verifState==='pending') val.textContent = t('verifPending');
   if (verifState==='verified') val.textContent = t('verifVerified');
-  uploadBlock.style.display = verifState==='none' ? 'block' : 'none';
+  if (verifState==='rejected') val.textContent = t('verifRejected');
+  uploadBlock.style.display = (verifState==='none' || verifState==='rejected') ? 'block' : 'none';
 }
 function submitVerification(){
   if (!verifFile) return;
   verifState = 'pending';
   renderVerifStatus();
+  saveAccount();
   toast(t('verifSubmittedToast'));
-  setTimeout(()=>{
-    verifState = 'verified';
-    renderVerifStatus();
-    toast(t('verifApprovedToast'));
-  }, 6000);
 }
 
 /* ---------- closed trades history ---------- */
-let closedTrades = [];
+let closedTrades = accountData.closedTrades.map(c=>({...c, closedAt: new Date(c.closedAt)}));
 function recordClosedTrade(tr, pct, pnlPortion, closePrice){
   closedTrades.unshift({
     marketId: tr.marketId, direction: tr.direction, entry: tr.entry, closePrice,
@@ -2967,6 +3366,7 @@ try {
 } catch(e){}
 
 render();
+if (accountBlockedFlag) showBlockedOverlay();
 </script>
 </body>
 </html>
