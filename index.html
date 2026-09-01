@@ -394,6 +394,22 @@
   .stake-position .meta-row .earn{color:var(--good); font-weight:600;}
   .progress-track{height:5px; background:var(--stroke); border-radius:99px; overflow:hidden;}
   .progress-fill{height:100%; background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); border-radius:99px; transition:width .6s ease;}
+  .claim-row{
+    display:flex; justify-content:space-between; align-items:center; margin-top:12px;
+    padding-top:12px; border-top:1px solid var(--stroke);
+  }
+  .claim-info{font-size:11px; color:var(--text-low);}
+  .claim-info b{color:var(--text-hi); font-family:'Space Grotesk',sans-serif; font-size:12.5px;}
+  .claim-info b.good{color:var(--good);}
+  .claim-actions{display:flex; gap:6px;}
+  .claim-btn{
+    font-size:11px; font-weight:600; padding:7px 11px; border-radius:9px; cursor:pointer; border:1px solid var(--stroke);
+  }
+  .claim-btn.withdraw{background:var(--bg-elev); color:var(--text-mid);}
+  .claim-btn.withdraw:not(:disabled):hover{border-color:var(--accent-1); color:var(--accent-2);}
+  .claim-btn.reinvest{background:rgba(63,221,166,.1); border-color:rgba(63,221,166,.3); color:var(--good);}
+  .claim-btn.reinvest:not(:disabled):hover{background:rgba(63,221,166,.18);}
+  .claim-btn:disabled{opacity:.35; cursor:not-allowed;}
 
   /* ---------- payment method select ---------- */
   .method-list{display:flex; flex-direction:column; gap:10px; margin-bottom:6px;}
@@ -699,6 +715,7 @@
     <div class="langs" id="langSwitch">
       <button data-lang="ru">RU</button>
       <button data-lang="uk">UA</button>
+      <button data-lang="en">EN</button>
     </div>
   </div>
 
@@ -841,7 +858,6 @@
         <div class="cat-row" id="catRow">
           <button data-cat="all" class="active" data-i18n="catAll">Все</button>
           <button data-cat="crypto" data-i18n="catCrypto">Крипто</button>
-          <button data-cat="forex" data-i18n="catForex">Форекс</button>
           <button data-cat="commodity" data-i18n="catCommodity">Товары</button>
         </div>
         <div id="marketsList"></div>
@@ -1442,7 +1458,7 @@ const dict = {
     uahLabel:"грн", cardRangeHint:"Мин. 2 250 – макс. 29 999 грн", recipientCard:"Номер карты для перевода",
     recipientName:"Получатель", cardTransferHint:"Переведите точную сумму на указанную карту. Баланс пополнится после подтверждения перевода.",
     iTransferred:"Я перевёл(а)",
-    markets:"Рынки", navMarkets:"Рынки", today:"за сегодня", marketsDemoNote:"Крипта и золото (PAXG) — реальные цены Binance в реальном времени (WebSocket, посекундно). Форекс и USD/UAH — официальные курсы ЕЦБ/НБУ; сами эти институты публикуют их не чаще раза в день, поэтому секундные колебания на графике — небольшие технические колебания вокруг настоящего официального курса, а не отдельные официальные котировки. Товары и биржевые индексы убраны из списка — для них нет бесплатного официального источника без платного API-ключа.",
+    markets:"Рынки", navMarkets:"Рынки", today:"за сегодня", marketsDemoNote:"Крипта и золото (PAXG) — реальные цены Binance в реальном времени (WebSocket, посекундно). Форекс и биржевые индексы не включены — для них нет бесплатного официального источника без платного API-ключа.",
     todayLabel:"Сегодня", minLabel:"Минимум", maxLabel:"Максимум", sellLabel:"Продать", buyLabel:"Купить", spreadLabel:"Спред",
     searchPlaceholder:"Поиск: BTC, EUR, Gold…", catAll:"Все", catCrypto:"Крипто", catForex:"Форекс", catCommodity:"Товары", catIndex:"Индексы", noResults:"Ничего не найдено",
     liveTag:"LIVE", connectingTag:"…",
@@ -1461,7 +1477,7 @@ const dict = {
     refReapplyBtn:"Подать заявку снова", refRequestSentToast:"Заявка отправлена", refApprovedToast:"Заявка одобрена! Ссылка доступна",
     refSupportQuestion:"Вопросы? Напишите",
     tierTableTitle:"Уровни вознаграждения", invitedShort:"приглаш.", noInviteesYet:"Пока никого не пригласили",
-    langNames:{ru:"Русский", uk:"Українська"}
+    langNames:{ru:"Русский", uk:"Українська", en:"English"}
   },
   uk:{
     demoText:"Демо-версія інтерфейсу. Дані нижче — тестові, реальних нарахувань і виплат немає.",
@@ -1513,7 +1529,7 @@ const dict = {
     uahLabel:"грн", cardRangeHint:"Мін. 2 250 – макс. 29 999 грн", recipientCard:"Номер картки для переказу",
     recipientName:"Отримувач", cardTransferHint:"Переведіть точну суму на вказану картку. Баланс поповниться після підтвердження переказу.",
     iTransferred:"Я переказав(ла)",
-    markets:"Ринки", navMarkets:"Ринки", today:"за сьогодні", marketsDemoNote:"Крипта і золото (PAXG) — реальні ціни Binance у реальному часі (WebSocket, щосекунди). Форекс і USD/UAH — офіційні курси ЄЦБ/НБУ; самі ці установи публікують їх не частіше разу на день, тому секундні коливання на графіку — невеликі технічні коливання навколо справжнього офіційного курсу, а не окремі офіційні котирування. Товари та біржові індекси прибрано зі списку — для них немає безкоштовного офіційного джерела без платного API-ключа.",
+    markets:"Ринки", navMarkets:"Ринки", today:"за сьогодні", marketsDemoNote:"Крипта і золото (PAXG) — реальні ціни Binance у реальному часі (WebSocket, щосекунди). Форекс і біржові індекси не включені — для них немає безкоштовного офіційного джерела без платного API-ключа.",
     todayLabel:"Сьогодні", minLabel:"Мінімум", maxLabel:"Максимум", sellLabel:"Продати", buyLabel:"Купити", spreadLabel:"Спред",
     searchPlaceholder:"Пошук: BTC, EUR, Gold…", catAll:"Всі", catCrypto:"Крипто", catForex:"Форекс", catCommodity:"Товари", catIndex:"Індекси", noResults:"Нічого не знайдено",
     liveTag:"LIVE", connectingTag:"…",
@@ -1532,7 +1548,81 @@ const dict = {
     refReapplyBtn:"Подати заявку знову", refRequestSentToast:"Заявку надіслано", refApprovedToast:"Заявку схвалено! Посилання доступне",
     refSupportQuestion:"Питання? Напишіть",
     tierTableTitle:"Рівні винагороди", invitedShort:"запрош.", noInviteesYet:"Поки нікого не запросили",
-    langNames:{ru:"Русский", uk:"Українська"}
+    langNames:{ru:"Русский", uk:"Українська", en:"English"}
+  },
+  en:{
+    demoText:"Interface demo. All data below is placeholder — no real deposits or payouts happen here.",
+    portfolio:"Portfolio", totalBalance:"Total balance", days:"d", topup:"Top up USDT",
+    stakingPlans:"Staking plans", demoRates:"demo rates",
+    referral:"Referral program", refRateText:"of each invited user's deposit — credited to your balance",
+    copy:"Copy", invited:"Invited", earned:"Earned, USDT", yourInvites:"Your invitees",
+    settings:"Settings", language:"Language", account:"Account", notifications:"Notifications", on:"On", support:"Support",
+    navPortfolio:"Portfolio", navReferral:"Referral", navSettings:"Settings",
+    stakeBtn:"Stake", topupToast:"Demo mode: top-up is disabled", copiedToast:"Link copied",
+    topupTitle:"Top up USDT", enterAmount:"Amount to deposit", chooseNetwork:"Network", feeLow:"lowest fee",
+    continue:"Continue", sendExactly:"Send the exact amount", depositAddress:"Deposit address",
+    addrHint:"Only send USDT on the selected network. Funds sent on another network will be lost.",
+    iSent:"I've sent it", back:"Back", pendingTitle:"Request under review",
+    pendingSub:"We'll verify the transfer and credit your balance manually. This usually takes a little time.",
+    done:"Done", addrCopied:"Address copied", copyFailedToast:"Couldn't copy, please copy it manually", topupBtn:"Top up USDT/Bank Card",
+    pendingReviewText:"under review, we'll credit it manually", depositApprovedToast:"Deposit confirmed:", depositRejectedToast:"Deposit declined by the admin",
+    accountBlockedTitle:"Account blocked", accountBlockedText:"Contact support if you think this is a mistake.",
+    topupBtnShort:"Top up", withdrawBtn:"Withdraw", withdrawTitle:"Withdraw USDT", withdrawAmountLabel:"Withdrawal amount",
+    withdrawAddressLabel:"USDT wallet address", withdrawAddressPlaceholder:"Enter wallet address",
+    withdrawNetworkLabel:"Network", withdrawFeeLabel:"Network fee", withdrawContinue:"Continue",
+    withdrawConfirm:"Confirm withdrawal", withdrawReviewTitle:"Review withdrawal details",
+    withdrawToAddress:"Recipient address", withdrawCreatedTitle:"Withdrawal request created",
+    withdrawCreatedSub:"Processing usually takes up to 30 minutes. Your balance is already updated.",
+    insufficientBalance:"Insufficient balance",
+    openPositions:"Open positions", openTradeTitle:"Open a trade", tradeAmountLabel:"Position size",
+    leverageLabel:"Leverage", tpLabel:"Take-profit", slLabel:"Stop-loss", entryPriceLabel:"Entry price",
+    tradeSizeLabel:"Leveraged size", liqLabel:"Liquidation", openTradeBtn:"Open trade",
+    tpBelowPrice:"Take-profit must be above the price for a buy / below it for a sell",
+    slWrongSide:"Stop-loss must be below the price for a buy / above it for a sell",
+    positionClosedToast:"Position closed", tpHitToast:"Take-profit triggered",
+    slHitToast:"Stop-loss triggered", entry:"Entry", size:"Size", pnlLabel:"P&L", positionOpenedToast:"opened",
+    editBtn:"Edit", editTradeTitle:"Edit trade", currentPriceLabel:"Current price",
+    saveChanges:"Save", changesSavedToast:"Changes saved",
+    myTradesTab:"Open trades", marketsTab:"Markets", noOpenTrades:"No open trades", closePartLabel:"Close part of the position",
+    overTerm:"per term", minFrom:"min.",
+    activeStakes:"Active stakes", stakeAmountLabel:"Stake amount", available:"Available", max:"MAX",
+    reviewTitle:"Review the terms", amountLbl:"Amount", durationLbl:"Duration", apyLbl:"APY",
+    estEarnLbl:"Projected earnings", unlockLbl:"Unlocks on",
+    agreeText:"I understand funds are locked until the unlock date",
+    confirmStakeBtn:"Confirm stake", stakeCreatedTitle:"Stake opened",
+    daysWord:"days", unlocksOn:"Unlocks", earnLabel:"earning",
+    payMethodTitle:"Top-up method", methodUsdt:"USDT", methodUsdtSub:"Crypto transfer · TRC20 / ERC20 / BEP20",
+    methodCard:"Bank card", methodCardSub:"Visa · Mastercard · instant credit",
+    cardDetailsTitle:"Transfer to card", cardNumber:"Card number", expiry:"Expiry", cardholder:"Cardholder name",
+    pay:"Pay", processingTitle:"Processing payment…", processingSub:"This takes a few seconds",
+    cardSuccessTitle:"Balance topped up", creditedText:"credited to your balance",
+    uahLabel:"UAH", cardRangeHint:"Min 2,250 – max 29,999 UAH", recipientCard:"Card number to transfer to",
+    recipientName:"Recipient", cardTransferHint:"Transfer the exact amount to the card shown. Your balance updates once the transfer is confirmed.",
+    iTransferred:"I've transferred it",
+    markets:"Markets", navMarkets:"Markets", today:"today",
+    marketsDemoNote:"Crypto and gold (PAXG) — real Binance prices in real time (WebSocket, updated every second). Forex and stock indices aren't included — there's no free official source for them without a paid API key.",
+    todayLabel:"Today", minLabel:"Minimum", maxLabel:"Maximum", sellLabel:"Sell", buyLabel:"Buy", spreadLabel:"Spread",
+    searchPlaceholder:"Search: BTC, EUR, Gold…", catAll:"All", catCrypto:"Crypto", catForex:"Forex", catCommodity:"Commodities", catIndex:"Indices", noResults:"Nothing found",
+    liveTag:"LIVE", connectingTag:"…",
+    verificationTitle:"Verification", verifStatusLabel:"Status", verifNotStarted:"Not verified",
+    verifPending:"Under review", verifVerified:"Verified",
+    verifHint:"Upload a photo of your ID document (passport or ID card) to raise your withdrawal limits.",
+    verifUploadLabel:"Upload document", verifSubmitBtn:"Submit for review",
+    verifSubmittedToast:"Document submitted for review", verifApprovedToast:"Verification approved",
+    verifRejected:"Rejected", verifRejectedToast:"Verification rejected, please try again",
+    verifRemoveFile:"remove", noClosedTrades:"No closed trades", historyTab:"History", closedAt:"Closed",
+    refIntroTitle:"Become a NovaPlus partner",
+    refIntroText:"Apply to join the referral program. Once an admin approves it, you'll get your personal link and earnings stats.",
+    refApplyBtn:"Apply", refPendingStatus:"Under review",
+    refPendingText:"Your application has been sent. Your referral link will appear here once an admin approves it.",
+    refRejectedStatus:"Rejected", refRejectedText:"Your application was rejected. You can apply again.",
+    refReapplyBtn:"Apply again", refRequestSentToast:"Application sent", refApprovedToast:"Application approved! Your link is ready",
+    refSupportQuestion:"Questions? Message",
+    tierTableTitle:"Reward tiers", invitedShort:"invited", noInviteesYet:"You haven't invited anyone yet",
+    stakeToast:d=>`Demo mode: the ${d}-day plan would open here in a real version`,
+    closePct:pct=>`Close ${pct}%`,
+    minDepositHint:min=>`The minimum amount for this plan is ${min} USDT`,
+    langNames:{ru:"Русский", uk:"Українська", en:"English"}
   }
 };
 
@@ -1542,11 +1632,7 @@ const DEFAULT_CONFIG = {
     {days:45, apy:157.5, min:500, featured:true},
   ],
   referralTiers: [
-    {min:1, max:4, rate:15},
-    {min:5, max:9, rate:20},
-    {min:10, max:19, rate:20},
-    {min:20, max:29, rate:30},
-    {min:30, max:49, rate:40},
+    {min:1, max:49, rate:50},
     {min:50, max:null, rate:65},
   ],
   refLink: "t.me/novaplus_bot?start=ref_8841kf",
@@ -2179,7 +2265,13 @@ function drawFakeQr(){
 
 /* ---------- staking sheet ---------- */
 let availableBalance = accountData.balance;
-let activeStakes = accountData.activeStakes.map(s=>({...s, unlock: new Date(s.unlock)}));
+let activeStakes = accountData.activeStakes.map(s=>({
+  ...s,
+  unlock: new Date(s.unlock),
+  openedAt: s.openedAt ? new Date(s.openedAt) : new Date(new Date(s.unlock).getTime() - s.days*86400000),
+  claimedDays: s.claimedDays || 0,
+}));
+let stakeIdSeq = Date.now();
 let currentPlan = null;
 let stakeAmountVal = 0;
 
@@ -2234,11 +2326,39 @@ function confirmStake(){
   const unlock = new Date(Date.now() + p.days*86400000);
   availableBalance -= stakeAmountVal;
   document.getElementById('balanceMain').textContent = fmt(availableBalance);
-  activeStakes.push({ amount:stakeAmountVal, days:p.days, apy:p.apy, earn, unlock, progress:2 });
+  activeStakes.push({ id:stakeIdSeq++, amount:stakeAmountVal, days:p.days, apy:p.apy, earn, unlock, openedAt:new Date(), claimedDays:0, progress:2 });
   renderActiveStakes();
   saveAccount();
   document.getElementById('stakeSuccessSub').textContent = p.days + ' ' + daysWord(p.days) + ' · ' + p.apy + '% APY';
   showStep('stake-success');
+}
+function stakeDailyEarn(s){ return s.amount * (s.apy/100) / s.days; }
+function stakeDaysElapsed(s){
+  const elapsed = Math.floor((Date.now() - new Date(s.openedAt).getTime()) / 86400000);
+  return Math.max(0, Math.min(s.days, elapsed));
+}
+function stakeClaimable(s){
+  const elapsed = stakeDaysElapsed(s);
+  const owedDays = Math.max(0, elapsed - (s.claimedDays||0));
+  return owedDays * stakeDailyEarn(s);
+}
+function claimStakeProfit(id, mode){
+  const s = activeStakes.find(x=>x.id===id);
+  if (!s) return;
+  const claimable = stakeClaimable(s);
+  if (claimable <= 0){ toast(t('nothingToClaimToast')); return; }
+  if (mode === 'withdraw'){
+    availableBalance += claimable;
+    document.getElementById('balanceMain').textContent = fmt(availableBalance);
+    toast('+' + fmt(claimable) + ' USDT');
+  } else {
+    s.amount += claimable;
+    s.earn = s.amount * (s.apy/100);
+    toast(t('reinvestedToast') + ' +' + fmt(claimable) + ' USDT');
+  }
+  s.claimedDays = stakeDaysElapsed(s);
+  renderActiveStakes();
+  saveAccount();
 }
 function renderActiveStakes(){
   const label = document.getElementById('activeStakesLabel');
@@ -2248,6 +2368,10 @@ function renderActiveStakes(){
   if (activeStakes.length === 0){ label.style.display = 'none'; return; }
   label.style.display = 'flex';
   activeStakes.forEach(s=>{
+    const elapsed = stakeDaysElapsed(s);
+    const progress = Math.round((elapsed / s.days) * 100);
+    const claimable = stakeClaimable(s);
+    const totalProjected = s.amount * (s.apy/100);
     const el = document.createElement('div');
     el.className = 'stake-position';
     el.innerHTML = `
@@ -2257,9 +2381,19 @@ function renderActiveStakes(){
       </div>
       <div class="meta-row">
         <span>${t('unlocksOn')}: ${s.unlock.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})}</span>
-        <span class="earn">+${fmt(s.earn)} ${t('earnLabel')}</span>
+        <span class="earn">+${fmt(totalProjected)} ${t('earnLabel')}</span>
       </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${s.progress}%"></div></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="claim-row">
+        <div class="claim-info">
+          <span data-i18n="availableToday">Доступно сегодня</span>:
+          <b class="${claimable>0?'good':''}">${fmt(claimable)} USDT</b>
+        </div>
+        <div class="claim-actions">
+          <button class="claim-btn withdraw" ${claimable<=0?'disabled':''} onclick="claimStakeProfit(${s.id},'withdraw')" data-i18n="withdrawProfit">Забрать</button>
+          <button class="claim-btn reinvest" ${claimable<=0?'disabled':''} onclick="claimStakeProfit(${s.id},'reinvest')" data-i18n="reinvest">Реинвест</button>
+        </div>
+      </div>
     `;
     list.appendChild(el);
   });
@@ -2632,17 +2766,6 @@ const marketsData = [
   {id:'op', name:'Optimism', pair:'OP/USDT', price:1.85, change:-0.71, short:'OP', cat:'crypto'},
   {id:'sui', name:'Sui', pair:'SUI/USDT', price:4.60, change:3.82, short:'SUI', cat:'crypto'},
   {id:'inj', name:'Injective', pair:'INJ/USDT', price:24.30, change:1.22, short:'INJ', cat:'crypto'},
-  // --- Форекс ---
-  {id:'eur', name:'Euro', pair:'EUR/USD', price:1.0842, change:-0.18, short:'EUR', cat:'forex'},
-  {id:'gbp', name:'British Pound', pair:'GBP/USD', price:1.2710, change:0.12, short:'GBP', cat:'forex'},
-  {id:'jpy', name:'Japanese Yen', pair:'USD/JPY', price:152.40, change:0.25, short:'JPY', cat:'forex'},
-  {id:'chf', name:'Swiss Franc', pair:'USD/CHF', price:0.8890, change:-0.08, short:'CHF', cat:'forex'},
-  {id:'aud', name:'Australian Dollar', pair:'AUD/USD', price:0.6520, change:0.31, short:'AUD', cat:'forex'},
-  {id:'cad', name:'Canadian Dollar', pair:'USD/CAD', price:1.3680, change:-0.15, short:'CAD', cat:'forex'},
-  {id:'nzd', name:'New Zealand Dollar', pair:'NZD/USD', price:0.5980, change:0.09, short:'NZD', cat:'forex'},
-  {id:'uah', name:'US Dollar / Hryvnia', pair:'USD/UAH', price:41.20, change:0.09, short:'UAH', cat:'forex'},
-  {id:'cny', name:'Chinese Yuan', pair:'USD/CNY', price:7.1450, change:-0.05, short:'CNY', cat:'forex'},
-  {id:'try', name:'Turkish Lira', pair:'USD/TRY', price:34.80, change:0.42, short:'TRY', cat:'forex'},
   // --- Товары (только то, что можно получить как реальный биржевой фид без платного API) ---
   {id:'xau', name:'Gold', pair:'PAXG/USDT', price:2680.30, change:0.34, short:'Au', cat:'commodity'},
 ];
@@ -2661,8 +2784,6 @@ const BINANCE_SYMBOL = {
   xau:'paxgusdt', // Pax Gold — token backed 1:1 by physical gold, tracks spot gold price
 };
 const SYMBOL_TO_ID = Object.fromEntries(Object.entries(BINANCE_SYMBOL).map(([id,sym])=>[sym,id]));
-const FOREX_INVERTED = new Set(['eur','gbp','aud','nzd']); // pair is XXX/USD -> price = 1/rate(USD->XXX)
-const FOREX_DIRECT = new Set(['jpy','chf','cad','cny','try']); // pair is USD/XXX -> price = rate(USD->XXX) directly
 
 let lastTickAt = null;
 function setWsStatus(text, cls){
@@ -2769,75 +2890,6 @@ async function fetchUsdtLive(){
   } catch(e){ /* stays not-yet-live until next attempt */ }
 }
 
-/* Forex & USD/UAH: EUR/GBP/etc. are official rates (ECB via Frankfurter, NBU) and
-   those institutions only publish once per business day — there is no free source
-   that ticks every second because the real number itself doesn't change that often.
-   We fetch the true official rate as the anchor (dayOpen + rate), then apply a tiny
-   synthetic jitter every second around that real anchor so the UI visibly "breathes"
-   like a live market — clearly still anchored to the real published rate, not a
-   fabricated one. */
-let forexAnchors = {}; // id -> real official rate fetched from the API
-async function fetchForexLive(){
-  try {
-    const today = new Date();
-    const yest = new Date(today.getTime() - 86400000);
-    const yestStr = yest.toISOString().slice(0,10);
-    const symbols = 'EUR,GBP,JPY,CHF,AUD,CAD,NZD,CNY,TRY';
-    const [latestRes, prevRes] = await Promise.all([
-      fetch(`https://api.frankfurter.app/latest?from=USD&to=${symbols}`),
-      fetch(`https://api.frankfurter.app/${yestStr}?from=USD&to=${symbols}`),
-    ]);
-    if (!latestRes.ok) throw new Error('frankfurter http ' + latestRes.status);
-    const latest = await latestRes.json();
-    const prev = prevRes.ok ? await prevRes.json() : null;
-    Object.keys(latest.rates || {}).forEach(code=>{
-      const id = code.toLowerCase();
-      const m = marketsData.find(x=>x.id===id);
-      if (!m) return;
-      const rateNow = latest.rates[code];
-      const rateOpen = prev && prev.rates ? prev.rates[code] : rateNow;
-      let priceNow, priceOpen;
-      if (FOREX_INVERTED.has(id)){ priceNow = 1/rateNow; priceOpen = 1/rateOpen; }
-      else if (FOREX_DIRECT.has(id)){ priceNow = rateNow; priceOpen = rateOpen; }
-      else return;
-      forexAnchors[id] = priceNow;
-      m.dayOpen = priceOpen;
-      if (!m.live) m.price = priceNow;
-      m.live = true;
-    });
-    updateLiveDisplays();
-  } catch(e){ /* stays not-yet-live until next attempt */ }
-}
-async function fetchUahLive(){
-  try {
-    const res = await fetch('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=USD&json');
-    if (!res.ok) throw new Error('nbu http ' + res.status);
-    const data = await res.json();
-    const rate = data && data[0] && data[0].rate;
-    if (typeof rate !== 'number') return;
-    const m = marketsData.find(x=>x.id==='uah');
-    if (!m) return;
-    if (!m.live) m.dayOpen = m.price;
-    forexAnchors.uah = rate;
-    if (!m.live) m.price = rate;
-    m.live = true;
-    updateLiveDisplays();
-  } catch(e){ /* stays not-yet-live until next attempt */ }
-}
-const FOREX_PIP_SIZE = { eur:0.0001, gbp:0.0001, aud:0.0001, nzd:0.0001, chf:0.0001, cad:0.0001, cny:0.0001, jpy:0.01, try:0.01, uah:0.01 };
-function tickForexJitter(){
-  Object.keys(forexAnchors).forEach(id=>{
-    const m = marketsData.find(x=>x.id===id);
-    if (!m || !m.live) return;
-    const anchor = forexAnchors[id];
-    const pip = FOREX_PIP_SIZE[id] || anchor*0.0001;
-    const jitter = (Math.random()-0.5) * pip * 6; // ± up to ~3 pips, visible every tick
-    m.price = anchor + jitter;
-    m.change = ((m.price - m.dayOpen)/m.dayOpen)*100;
-  });
-  updateLiveDisplays();
-}
-
 function updateLiveDisplays(){
   document.querySelectorAll('#marketsList .market-row').forEach(row=>{
     const m = marketsData.find(x=>x.id === row.dataset.id);
@@ -2865,12 +2917,7 @@ function updateLiveDisplays(){
 }
 connectBinanceWS();
 fetchUsdtLive();
-fetchForexLive();
-fetchUahLive();
 setInterval(fetchUsdtLive, 20000);
-setInterval(fetchForexLive, 60000);
-setInterval(fetchUahLive, 60000);
-setInterval(tickForexJitter, 1000);
 
 function hueFromId(id){
   let h = 0;
@@ -3075,7 +3122,7 @@ function renderMarketsList(){
   if (!list) return;
   list.innerHTML = '';
   const q = (document.getElementById('marketSearch').value || '').trim().toLowerCase();
-  const catNames = { crypto:t('catCrypto'), forex:t('catForex'), commodity:t('catCommodity') };
+  const catNames = { crypto:t('catCrypto'), commodity:t('catCommodity') };
 
   let filtered = marketsData.filter(m=>{
     const matchesCat = currentCategory === 'all' || m.cat === currentCategory;
@@ -3090,7 +3137,7 @@ function renderMarketsList(){
   empty.style.display = 'none';
 
   if (currentCategory === 'all' && !q){
-    ['crypto','forex','commodity'].forEach(cat=>{
+    ['crypto','commodity'].forEach(cat=>{
       const items = marketsData.filter(m=>m.cat===cat);
       if (!items.length) return;
       const title = document.createElement('div');
