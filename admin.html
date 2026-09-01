@@ -479,11 +479,18 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
 
+function sanitizeConfigNumbers(cfg){
+  const numFields = ['startingBalance','withdrawFee','tradingSpreadPct','maxLeverage','uahMin','uahMax','uahRate'];
+  numFields.forEach(k=>{
+    if (typeof cfg[k] !== 'number' || !isFinite(cfg[k])) cfg[k] = DEFAULT_CONFIG[k];
+  });
+  return cfg;
+}
 async function loadConfig(){
   try {
     const snap = await db.collection('meta').doc('config').get();
     if (!snap.exists) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), snap.data());
+    return sanitizeConfigNumbers(Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), snap.data()));
   } catch(e){ return JSON.parse(JSON.stringify(DEFAULT_CONFIG)); }
 }
 async function saveConfig(cfg){
@@ -628,12 +635,14 @@ function saveTrading(){
 /* ---------- general ---------- */
 function fillGeneral(){
   document.getElementById('cfgBrandName').value = CONFIG.brandName;
-  document.getElementById('cfgStartingBalance').value = CONFIG.startingBalance;
+  const sb = CONFIG.startingBalance;
+  document.getElementById('cfgStartingBalance').value = (typeof sb === 'number' && isFinite(sb)) ? sb : 0;
   document.getElementById('cfgDefaultLang').value = CONFIG.defaultLang;
 }
 function saveGeneral(){
   CONFIG.brandName = document.getElementById('cfgBrandName').value.trim() || 'NovaPlus';
-  CONFIG.startingBalance = parseFloat(document.getElementById('cfgStartingBalance').value) || 0;
+  const parsed = parseFloat(document.getElementById('cfgStartingBalance').value);
+  CONFIG.startingBalance = (isFinite(parsed) && parsed >= 0) ? parsed : 0;
   CONFIG.defaultLang = document.getElementById('cfgDefaultLang').value;
   saveConfig(CONFIG);
   toast('Общие настройки сохранены');
