@@ -219,6 +219,27 @@
   .verif-badge.pending{background:var(--warn); box-shadow:0 0 8px rgba(255,180,84,.6);}
   .verif-badge.verified{background:var(--good); box-shadow:0 0 8px rgba(63,221,166,.6);}
   .verif-badge.rejected{background:var(--bad); box-shadow:0 0 8px rgba(255,107,107,.6);}
+
+  /* ---------- deposit/withdrawal history ---------- */
+  .tx-row{display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid var(--stroke);}
+  .tx-row:last-child{border-bottom:none;}
+  .tx-row-icon{
+    width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:700;
+  }
+  .tx-row-icon.in{background:rgba(63,221,166,.12); color:var(--good);}
+  .tx-row-icon.out{background:rgba(255,180,84,.12); color:var(--warn);}
+  .tx-row-mid{flex:1; min-width:0;}
+  .tx-row-title{font-size:13.5px; font-weight:500;}
+  .tx-row-date{font-size:11.5px; color:var(--text-low); margin-top:1px;}
+  .tx-row-right{text-align:right; flex:none;}
+  .tx-row-amount{font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;}
+  .tx-row-amount.up{color:var(--good);}
+  .tx-row-amount.down{color:var(--text-low); text-decoration:line-through;}
+  .tx-row-status{font-size:10.5px; margin-top:2px;}
+  .tx-row-status.pending{color:var(--warn);}
+  .tx-row-status.approved{color:var(--good);}
+  .tx-row-status.rejected{color:var(--bad);}
   .verif-upload-box{
     display:flex; flex-direction:column; align-items:center; gap:8px;
     border:1.5px dashed var(--stroke); border-radius:14px; padding:24px 14px;
@@ -821,7 +842,7 @@
             <div class="txt" data-i18n="refRateText">от суммы депозита каждого приглашённого — начисляется на ваш баланс</div>
           </div>
           <div class="link-box">
-            <input id="refLink" readonly value="t.me/novaplus_bot?start=ref_8841kf">
+            <input id="refLink" readonly value="t.me/novaplus_official_bot?start=ref_8841kf">
             <button class="copy-btn" onclick="copyLink()" data-i18n="copy">Скопировать</button>
           </div>
           <div class="stat-row">
@@ -989,6 +1010,12 @@
           <div class="lab" data-i18n="support">Поддержка</div>
           <a class="val support-link" href="https://t.me/novaplus_support" target="_blank" rel="noopener">@novaplus_support</a>
         </div>
+      </div>
+
+      <div class="section-label"><h2 data-i18n="txHistoryTitle">История пополнений и выводов</h2></div>
+      <div class="card">
+        <div id="txHistoryEmpty" class="hint-note" style="text-align:center; padding:6px 0;" data-i18n="txHistoryEmpty">Здесь появятся ваши пополнения и выводы</div>
+        <div id="txHistoryList"></div>
       </div>
 
       <div class="section-label"><h2 data-i18n="verificationTitle">Верификация</h2></div>
@@ -1431,7 +1458,7 @@ const dict = {
     withdrawNetworkLabel:"Сеть", withdrawFeeLabel:"Комиссия сети", withdrawContinue:"Продолжить",
     withdrawConfirm:"Подтвердить вывод", withdrawReviewTitle:"Проверьте детали вывода",
     withdrawToAddress:"Адрес получения", withdrawCreatedTitle:"Заявка на вывод создана",
-    withdrawCreatedSub:"Обычно обработка занимает до 30 минут. Баланс уже обновлён.",
+    withdrawCreatedSub:"Мы проверим заявку вручную и отправим средства. Баланс уже списан.",
     insufficientBalance:"Недостаточно средств на балансе",
     openPositions:"Открытые сделки", openTradeTitle:"Открыть сделку", tradeAmountLabel:"Размер позиции",
     leverageLabel:"Плечо", tpLabel:"Тейк-профит", slLabel:"Стоп-лосс", entryPriceLabel:"Цена входа",
@@ -1477,6 +1504,9 @@ const dict = {
     refReapplyBtn:"Подать заявку снова", refRequestSentToast:"Заявка отправлена", refApprovedToast:"Заявка одобрена! Ссылка доступна",
     refSupportQuestion:"Вопросы? Напишите",
     tierTableTitle:"Уровни вознаграждения", invitedShort:"приглаш.", noInviteesYet:"Пока никого не пригласили",
+    txHistoryTitle:"История пополнений и выводов", txHistoryEmpty:"Здесь появятся ваши пополнения и выводы",
+    txDeposit:"Пополнение", txWithdrawal:"Вывод", txPending:"На проверке", txApproved:"Подтверждено", txRejected:"Отклонено",
+    withdrawApprovedToast:"Вывод одобрен и отправлен", withdrawRejectedToast:"Вывод отклонён, средства возвращены на баланс",
     langNames:{ru:"Русский", uk:"Українська", en:"English"}
   },
   uk:{
@@ -1502,7 +1532,7 @@ const dict = {
     withdrawNetworkLabel:"Мережа", withdrawFeeLabel:"Комісія мережі", withdrawContinue:"Продовжити",
     withdrawConfirm:"Підтвердити виведення", withdrawReviewTitle:"Перевірте деталі виведення",
     withdrawToAddress:"Адреса отримання", withdrawCreatedTitle:"Заявку на виведення створено",
-    withdrawCreatedSub:"Зазвичай обробка займає до 30 хвилин. Баланс уже оновлено.",
+    withdrawCreatedSub:"Ми перевіримо заявку вручну і надішлемо кошти. Баланс уже списано.",
     insufficientBalance:"Недостатньо коштів на балансі",
     openPositions:"Відкриті угоди", openTradeTitle:"Відкрити угоду", tradeAmountLabel:"Розмір позиції",
     leverageLabel:"Плече", tpLabel:"Тейк-профіт", slLabel:"Стоп-лосс", entryPriceLabel:"Ціна входу",
@@ -1548,6 +1578,9 @@ const dict = {
     refReapplyBtn:"Подати заявку знову", refRequestSentToast:"Заявку надіслано", refApprovedToast:"Заявку схвалено! Посилання доступне",
     refSupportQuestion:"Питання? Напишіть",
     tierTableTitle:"Рівні винагороди", invitedShort:"запрош.", noInviteesYet:"Поки нікого не запросили",
+    txHistoryTitle:"Історія поповнень і виводів", txHistoryEmpty:"Тут з'являться ваші поповнення і виводи",
+    txDeposit:"Поповнення", txWithdrawal:"Вивід", txPending:"На перевірці", txApproved:"Підтверджено", txRejected:"Відхилено",
+    withdrawApprovedToast:"Вивід схвалено і надіслано", withdrawRejectedToast:"Вивід відхилено, кошти повернено на баланс",
     langNames:{ru:"Русский", uk:"Українська", en:"English"}
   },
   en:{
@@ -1572,7 +1605,7 @@ const dict = {
     withdrawNetworkLabel:"Network", withdrawFeeLabel:"Network fee", withdrawContinue:"Continue",
     withdrawConfirm:"Confirm withdrawal", withdrawReviewTitle:"Review withdrawal details",
     withdrawToAddress:"Recipient address", withdrawCreatedTitle:"Withdrawal request created",
-    withdrawCreatedSub:"Processing usually takes up to 30 minutes. Your balance is already updated.",
+    withdrawCreatedSub:"We'll review the request manually and send the funds. Your balance is already debited.",
     insufficientBalance:"Insufficient balance",
     openPositions:"Open positions", openTradeTitle:"Open a trade", tradeAmountLabel:"Position size",
     leverageLabel:"Leverage", tpLabel:"Take-profit", slLabel:"Stop-loss", entryPriceLabel:"Entry price",
@@ -1619,6 +1652,9 @@ const dict = {
     refReapplyBtn:"Apply again", refRequestSentToast:"Application sent", refApprovedToast:"Application approved! Your link is ready",
     refSupportQuestion:"Questions? Message",
     tierTableTitle:"Reward tiers", invitedShort:"invited", noInviteesYet:"You haven't invited anyone yet",
+    txHistoryTitle:"Deposit and withdrawal history", txHistoryEmpty:"Your deposits and withdrawals will appear here",
+    txDeposit:"Deposit", txWithdrawal:"Withdrawal", txPending:"Under review", txApproved:"Confirmed", txRejected:"Declined",
+    withdrawApprovedToast:"Withdrawal approved and sent", withdrawRejectedToast:"Withdrawal declined, funds returned to your balance",
     stakeToast:d=>`Demo mode: the ${d}-day plan would open here in a real version`,
     closePct:pct=>`Close ${pct}%`,
     minDepositHint:min=>`The minimum amount for this plan is ${min} USDT`,
@@ -1635,7 +1671,7 @@ const DEFAULT_CONFIG = {
     {min:1, max:49, rate:50},
     {min:50, max:null, rate:65},
   ],
-  refLink: "t.me/novaplus_bot?start=ref_8841kf",
+  refLink: "t.me/novaplus_official_bot?start=ref_8841kf",
   cryptoAddresses: { TRC20:"TXk9s...4fQ2m", ERC20:"0x8f2a...91cE", BEP20:"0x8f2a...91cE" },
   cardNumber: "4441 1149 9911 2233",
   cardHolder: "IVAN PETRENKO",
@@ -1815,8 +1851,26 @@ async function submitPendingDeposit(amountUsdt, method, extra){
   try { await db.collection('pendingDeposits').add(entry); } catch(e){ /* ignore */ }
   return entry;
 }
+async function submitPendingWithdrawal(amountUsdt, fee, address, network){
+  const entry = {
+    userId: currentUserId,
+    displayName: currentUserDisplayName,
+    amount: amountUsdt,
+    fee,
+    address: address || '',
+    network: network || '',
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+  };
+  try { await db.collection('pendingWithdrawals').add(entry); } catch(e){ /* ignore */ }
+  return entry;
+}
 let lastKnownDepositStatuses = {};
+let myDeposits = [];
+let myWithdrawals = [];
 function handleDepositSnapshot(snapshot){
+  myDeposits = snapshot.docs.map(d=>({ id: d.id, ...d.data() }));
+  renderTxHistory();
   snapshot.docChanges().forEach(change=>{
     const d = change.doc.data();
     const id = change.doc.id;
@@ -1828,6 +1882,57 @@ function handleDepositSnapshot(snapshot){
       if (d.status === 'rejected') toast(t('depositRejectedToast'));
     }
   });
+}
+let lastKnownWithdrawalStatuses = {};
+function handleWithdrawalSnapshot(snapshot){
+  myWithdrawals = snapshot.docs.map(d=>({ id: d.id, ...d.data() }));
+  renderTxHistory();
+  snapshot.docChanges().forEach(change=>{
+    const d = change.doc.data();
+    const id = change.doc.id;
+    const prev = lastKnownWithdrawalStatuses[id];
+    if (prev === undefined){ lastKnownWithdrawalStatuses[id] = d.status; return; }
+    if (prev !== d.status){
+      lastKnownWithdrawalStatuses[id] = d.status;
+      if (d.status === 'approved') toast(t('withdrawApprovedToast'));
+      if (d.status === 'rejected') toast(t('withdrawRejectedToast'));
+    }
+  });
+}
+function renderTxHistory(){
+  const list = document.getElementById('txHistoryList');
+  const empty = document.getElementById('txHistoryEmpty');
+  if (!list) return;
+  const statusLabel = { pending: t('txPending'), approved: t('txApproved'), rejected: t('txRejected') };
+  const rows = [
+    ...myDeposits.map(d=>({ kind:'deposit', amount:d.amount, status:d.status, createdAt:d.createdAt })),
+    ...myWithdrawals.map(w=>({ kind:'withdrawal', amount:w.amount, status:w.status, createdAt:w.createdAt })),
+  ].sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+  if (rows.length === 0){
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = rows.map(r=>{
+    const isDep = r.kind === 'deposit';
+    const sign = isDep ? '+' : '−';
+    const cls = r.status === 'rejected' ? 'down' : (isDep ? 'up' : '');
+    const dateStr = new Date(r.createdAt).toLocaleString(lang==='uk'?'uk-UA':lang==='en'?'en-US':'ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+    return `
+      <div class="tx-row">
+        <div class="tx-row-icon ${isDep ? 'in' : 'out'}">${isDep ? '↓' : '↑'}</div>
+        <div class="tx-row-mid">
+          <div class="tx-row-title">${isDep ? t('txDeposit') : t('txWithdrawal')}</div>
+          <div class="tx-row-date">${dateStr}</div>
+        </div>
+        <div class="tx-row-right">
+          <div class="tx-row-amount ${cls}">${sign}${fmt(r.amount)} USDT</div>
+          <div class="tx-row-status ${r.status}">${statusLabel[r.status]||r.status}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 let isBlockedShown = false;
 function showBlockedOverlay(){
@@ -2127,9 +2232,11 @@ function goToWithdrawAddress(){
   showStep('withdraw-address');
 }
 function confirmWithdraw(){
+  const address = document.getElementById('withdrawAddressInput').value.trim();
   availableBalance -= (withdrawAmountVal + WITHDRAW_FEE);
   document.getElementById('balanceMain').textContent = fmt(availableBalance);
   saveAccount();
+  submitPendingWithdrawal(withdrawAmountVal, WITHDRAW_FEE, address, withdrawNet);
   showStep('withdraw-success');
 }
 function cardRangeText(){
@@ -3469,6 +3576,7 @@ async function boot(){
     db.collection('accounts').doc(currentUserId).onSnapshot(handleAccountSnapshot);
     db.collection('referralRequests').doc(currentUserId).onSnapshot(handleReferralRequestSnapshot);
     db.collection('pendingDeposits').where('userId','==',currentUserId).onSnapshot(handleDepositSnapshot);
+    db.collection('pendingWithdrawals').where('userId','==',currentUserId).onSnapshot(handleWithdrawalSnapshot);
     db.collection('referrals').where('referrerId','==',currentUserId).onSnapshot(snapshot=>{
       cachedMyReferrals = snapshot.docs.map(d=>d.data());
       render();
