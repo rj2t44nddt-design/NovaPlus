@@ -1665,11 +1665,18 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
 
+function sanitizeConfigNumbers(cfg){
+  const numFields = ['startingBalance','withdrawFee','tradingSpreadPct','maxLeverage','uahMin','uahMax','uahRate'];
+  numFields.forEach(k=>{
+    if (typeof cfg[k] !== 'number' || !isFinite(cfg[k])) cfg[k] = DEFAULT_CONFIG[k];
+  });
+  return cfg;
+}
 async function loadConfig(){
   try {
     const snap = await db.collection('meta').doc('config').get();
     if (!snap.exists) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), snap.data());
+    return sanitizeConfigNumbers(Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), snap.data()));
   } catch(e){
     return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
   }
@@ -1698,8 +1705,9 @@ function personalizedRefLink(){
   return base + '?start=ref_' + code;
 }
 function freshAccount(){
+  const start = CONFIG.startingBalance;
   return {
-    balance: CONFIG.startingBalance,
+    balance: (typeof start === 'number' && isFinite(start)) ? start : 0,
     activeStakes: [],
     activeTrades: [],
     closedTrades: [],
@@ -2276,6 +2284,7 @@ let currentPlan = null;
 let stakeAmountVal = 0;
 
 function fmt(n){
+  if (typeof n !== 'number' || !isFinite(n)) n = 0;
   return n.toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 function daysWord(d){ return t('daysWord'); }
@@ -3445,7 +3454,7 @@ async function boot(){
     accountData = isNewAccount ? freshAccount() : Object.assign(freshAccount(), snap.data());
     accountBlockedFlag = accountData.blocked || false;
 
-    availableBalance = accountData.balance;
+    availableBalance = (typeof accountData.balance === 'number' && isFinite(accountData.balance)) ? accountData.balance : 0;
     activeStakes = (accountData.activeStakes||[]).map(s=>({...s, unlock: new Date(s.unlock)}));
     activeTrades = accountData.activeTrades || [];
     closedTrades = (accountData.closedTrades||[]).map(c=>({...c, closedAt: new Date(c.closedAt)}));
