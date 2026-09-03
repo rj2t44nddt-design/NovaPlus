@@ -415,6 +415,11 @@
   .stake-position .meta-row .earn{color:var(--good); font-weight:600;}
   .progress-track{height:5px; background:var(--stroke); border-radius:99px; overflow:hidden;}
   .progress-fill{height:100%; background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); border-radius:99px; transition:width .6s ease;}
+  .accrued-row{
+    display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-low); margin-top:10px;
+  }
+  .accrued-row b{color:var(--accent-2); font-family:'Space Grotesk',sans-serif; font-size:12.5px;}
+  .claim-cooldown{font-size:10.5px; color:var(--text-low); margin-top:8px; text-align:right;}
   .claim-row{
     display:flex; justify-content:space-between; align-items:center; margin-top:12px;
     padding-top:12px; border-top:1px solid var(--stroke);
@@ -1471,12 +1476,15 @@ const dict = {
     saveChanges:"Сохранить", changesSavedToast:"Изменения сохранены",
     myTradesTab:"Открытые сделки", marketsTab:"Рынки", noOpenTrades:"Нет открытых сделок", closePartLabel:"Закрыть часть позиции",
     overTerm:"за срок", minFrom:"мин.", minDepositHint:min=>`Минимальная сумма для этого тарифа — ${min} USDT`,
+    minMaxDepositHint:(min,max)=>`Сумма для этого тарифа — от ${min} до ${max} USDT`,
     activeStakes:"Активные стейки", stakeAmountLabel:"Сумма стейка", available:"Доступно", max:"MAX",
     reviewTitle:"Проверьте условия", amountLbl:"Сумма", durationLbl:"Срок", apyLbl:"APY",
     estEarnLbl:"Прогноз дохода", unlockLbl:"Разблокировка",
     agreeText:"Понимаю, что средства заблокированы до даты разблокировки",
     confirmStakeBtn:"Подтвердить стейк", stakeCreatedTitle:"Стейк открыт",
     daysWord:"дней", unlocksOn:"Разблокировка", earnLabel:"доход",
+    accruedTotal:"Накоплено дохода", claimCooldownToast:"Доступно раз в 24 часа. Следующее получение в",
+    nextClaimAt:"Следующее получение:",
     payMethodTitle:"Способ пополнения", methodUsdt:"USDT", methodUsdtSub:"Крипто-перевод · TRC20 / ERC20 / BEP20",
     methodCard:"Банковская карта", methodCardSub:"Visa · Mastercard · мгновенное зачисление",
     cardDetailsTitle:"Перевод на карту", cardNumber:"Номер карты", expiry:"Срок", cardholder:"Держатель карты",
@@ -1545,12 +1553,15 @@ const dict = {
     saveChanges:"Зберегти", changesSavedToast:"Зміни збережено",
     myTradesTab:"Відкриті угоди", marketsTab:"Ринки", noOpenTrades:"Немає відкритих угод", closePartLabel:"Закрити частину позиції",
     overTerm:"за термін", minFrom:"мін.", minDepositHint:min=>`Мінімальна сума для цього тарифу — ${min} USDT`,
+    minMaxDepositHint:(min,max)=>`Сума для цього тарифу — від ${min} до ${max} USDT`,
     activeStakes:"Активні стейки", stakeAmountLabel:"Сума стейку", available:"Доступно", max:"MAX",
     reviewTitle:"Перевірте умови", amountLbl:"Сума", durationLbl:"Термін", apyLbl:"APY",
     estEarnLbl:"Прогноз доходу", unlockLbl:"Розблокування",
     agreeText:"Розумію, що кошти заблоковані до дати розблокування",
     confirmStakeBtn:"Підтвердити стейк", stakeCreatedTitle:"Стейк відкрито",
     daysWord:"днів", unlocksOn:"Розблокування", earnLabel:"дохід",
+    accruedTotal:"Накопичено доходу", claimCooldownToast:"Доступно раз на 24 години. Наступне отримання о",
+    nextClaimAt:"Наступне отримання:",
     payMethodTitle:"Спосіб поповнення", methodUsdt:"USDT", methodUsdtSub:"Крипто-переказ · TRC20 / ERC20 / BEP20",
     methodCard:"Банківська картка", methodCardSub:"Visa · Mastercard · миттєве зарахування",
     cardDetailsTitle:"Переказ на картку", cardNumber:"Номер картки", expiry:"Термін", cardholder:"Власник картки",
@@ -1624,6 +1635,8 @@ const dict = {
     agreeText:"I understand funds are locked until the unlock date",
     confirmStakeBtn:"Confirm stake", stakeCreatedTitle:"Stake opened",
     daysWord:"days", unlocksOn:"Unlocks", earnLabel:"earning",
+    accruedTotal:"Accrued earnings", claimCooldownToast:"Available once every 24 hours. Next claim at",
+    nextClaimAt:"Next claim:",
     payMethodTitle:"Top-up method", methodUsdt:"USDT", methodUsdtSub:"Crypto transfer · TRC20 / ERC20 / BEP20",
     methodCard:"Bank card", methodCardSub:"Visa · Mastercard · instant credit",
     cardDetailsTitle:"Transfer to card", cardNumber:"Card number", expiry:"Expiry", cardholder:"Cardholder name",
@@ -1658,14 +1671,15 @@ const dict = {
     stakeToast:d=>`Demo mode: the ${d}-day plan would open here in a real version`,
     closePct:pct=>`Close ${pct}%`,
     minDepositHint:min=>`The minimum amount for this plan is ${min} USDT`,
+    minMaxDepositHint:(min,max)=>`Amount for this plan — from ${min} to ${max} USDT`,
     langNames:{ru:"Русский", uk:"Українська", en:"English"}
   }
 };
 
 const DEFAULT_CONFIG = {
   plans: [
-    {days:45, apy:90, min:100},
-    {days:45, apy:157.5, min:500, featured:true},
+    {days:45, apy:90, dailyRate:2, min:100, max:500},
+    {days:45, apy:157.5, dailyRate:3.5, min:500, max:10000, featured:true},
   ],
   referralTiers: [
     {min:1, max:49, rate:50},
@@ -1706,6 +1720,14 @@ function sanitizeConfigNumbers(cfg){
   numFields.forEach(k=>{
     if (typeof cfg[k] !== 'number' || !isFinite(cfg[k])) cfg[k] = DEFAULT_CONFIG[k];
   });
+  if (Array.isArray(cfg.plans)){
+    cfg.plans.forEach(p=>{
+      ['days','apy','dailyRate','min','max'].forEach(k=>{
+        if (typeof p[k] !== 'number' || !isFinite(p[k])) p[k] = 0;
+      });
+      if (typeof p.dailyRate !== 'number' || !p.dailyRate) p.dailyRate = p.days ? (p.apy / p.days) : 0;
+    });
+  }
   return cfg;
 }
 async function loadConfig(){
@@ -1758,12 +1780,21 @@ async function loadAccount(userId){
     return Object.assign(freshAccount(), snap.data());
   } catch(e){ return freshAccount(); }
 }
+function dateToIso(v){
+  const d = (v instanceof Date) ? v : toJSDate(v);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
 async function saveAccount(){
   const data = {
     balance: availableBalance,
-    activeStakes,
+    activeStakes: activeStakes.map(s=>({
+      ...s,
+      unlock: dateToIso(s.unlock),
+      openedAt: dateToIso(s.openedAt),
+      lastClaimAt: dateToIso(s.lastClaimAt),
+    })),
     activeTrades,
-    closedTrades,
+    closedTrades: closedTrades.map(c=>({...c, closedAt: dateToIso(c.closedAt)})),
     verifState,
     blocked: accountBlockedFlag,
   };
@@ -2057,7 +2088,7 @@ function render(){
       <div class="days">${p.days} ${lang==='uk' ? 'днів' : 'дней'}</div>
       <div class="apy">${p.apy}% <small>${t('overTerm')}</small></div>
       <div class="plan-daily">${daily}%/${lang==='uk' ? 'день' : 'день'}</div>
-      <div class="plan-min">${t('minFrom')} ${fmt(p.min||0)} USDT</div>
+      <div class="plan-min">${p.max ? (fmt(p.min||0) + '–' + fmt(p.max) + ' USDT') : (t('minFrom') + ' ' + fmt(p.min||0) + ' USDT')}</div>
       <div class="stake-btn">${t('stakeBtn')}</div>
     `;
     el.querySelector('.stake-btn').onclick = (e)=>{ e.stopPropagation(); openStake(p); };
@@ -2405,7 +2436,7 @@ function openStake(plan){
   stakeAmountVal = 0;
   document.getElementById('stakeContinueBtn').disabled = true;
   const minHint = document.getElementById('stakeMinHint');
-  if (minHint) minHint.textContent = t('minDepositHint')(plan.min || 0);
+  if (minHint) minHint.textContent = plan.max ? t('minMaxDepositHint')(plan.min || 0, plan.max) : t('minDepositHint')(plan.min || 0);
   document.getElementById('sheetOverlay').classList.add('show');
   showStep('stake-amount');
 }
@@ -2418,7 +2449,8 @@ function onStakeAmountInput(){
   const val = parseFloat(document.getElementById('stakeAmountInput').value) || 0;
   stakeAmountVal = val;
   const min = (currentPlan && currentPlan.min) || 0;
-  document.getElementById('stakeContinueBtn').disabled = !(val > 0 && val <= availableBalance && val >= min);
+  const max = (currentPlan && currentPlan.max) || Infinity;
+  document.getElementById('stakeContinueBtn').disabled = !(val > 0 && val <= availableBalance && val >= min && val <= max);
 }
 function goToStakeReview(){
   const p = currentPlan;
@@ -2442,15 +2474,23 @@ function confirmStake(){
   const unlock = new Date(Date.now() + p.days*86400000);
   availableBalance -= stakeAmountVal;
   document.getElementById('balanceMain').textContent = fmt(availableBalance);
-  activeStakes.push({ id:stakeIdSeq++, amount:stakeAmountVal, days:p.days, apy:p.apy, earn, unlock, openedAt:new Date(), claimedDays:0, progress:2 });
+  activeStakes.push({ id:stakeIdSeq++, amount:stakeAmountVal, days:p.days, apy:p.apy, earn, unlock, openedAt:new Date(), claimedDays:0, lastClaimAt:new Date(), progress:2 });
   renderActiveStakes();
   saveAccount();
   document.getElementById('stakeSuccessSub').textContent = p.days + ' ' + daysWord(p.days) + ' · ' + p.apy + '% APY';
   showStep('stake-success');
 }
+function toJSDate(v){
+  if (!v) return new Date(NaN);
+  if (v instanceof Date) return v;
+  if (typeof v === 'string' || typeof v === 'number') return new Date(v);
+  if (typeof v.toDate === 'function') return v.toDate(); // Firestore Timestamp object
+  if (typeof v.seconds === 'number') return new Date(v.seconds*1000 + Math.floor((v.nanoseconds||0)/1e6));
+  return new Date(NaN);
+}
 function stakeDailyEarn(s){ return s.amount * (s.apy/100) / s.days; }
 function stakeDaysElapsed(s){
-  const elapsed = Math.floor((Date.now() - new Date(s.openedAt).getTime()) / 86400000);
+  const elapsed = Math.floor((Date.now() - toJSDate(s.openedAt).getTime()) / 86400000);
   return Math.max(0, Math.min(s.days, elapsed));
 }
 function stakeClaimable(s){
@@ -2458,9 +2498,26 @@ function stakeClaimable(s){
   const owedDays = Math.max(0, elapsed - (s.claimedDays||0));
   return owedDays * stakeDailyEarn(s);
 }
+function stakeAccruedTotal(s){
+  return stakeDaysElapsed(s) * stakeDailyEarn(s);
+}
+const CLAIM_COOLDOWN_MS = 24*60*60*1000;
+function stakeCanClaim(s){
+  const last = s.lastClaimAt ? toJSDate(s.lastClaimAt).getTime() : toJSDate(s.openedAt).getTime();
+  return (Date.now() - last) >= CLAIM_COOLDOWN_MS;
+}
+function stakeNextClaimAt(s){
+  const last = s.lastClaimAt ? toJSDate(s.lastClaimAt).getTime() : toJSDate(s.openedAt).getTime();
+  return new Date(last + CLAIM_COOLDOWN_MS);
+}
 function claimStakeProfit(id, mode){
   const s = activeStakes.find(x=>x.id===id);
   if (!s) return;
+  if (!stakeCanClaim(s)){
+    const next = stakeNextClaimAt(s);
+    toast(t('claimCooldownToast') + ' ' + next.toLocaleTimeString(lang==='uk'?'uk-UA':lang==='en'?'en-US':'ru-RU', {hour:'2-digit', minute:'2-digit'}));
+    return;
+  }
   const claimable = stakeClaimable(s);
   if (claimable <= 0){ toast(t('nothingToClaimToast')); return; }
   if (mode === 'withdraw'){
@@ -2473,6 +2530,7 @@ function claimStakeProfit(id, mode){
     toast(t('reinvestedToast') + ' +' + fmt(claimable) + ' USDT');
   }
   s.claimedDays = stakeDaysElapsed(s);
+  s.lastClaimAt = new Date();
   renderActiveStakes();
   saveAccount();
 }
@@ -2487,7 +2545,14 @@ function renderActiveStakes(){
     const elapsed = stakeDaysElapsed(s);
     const progress = Math.round((elapsed / s.days) * 100);
     const claimable = stakeClaimable(s);
+    const accrued = stakeAccruedTotal(s);
     const totalProjected = s.amount * (s.apy/100);
+    const canClaim = stakeCanClaim(s) && claimable > 0;
+    const unlockDate = toJSDate(s.unlock);
+    const unlockText = isNaN(unlockDate.getTime()) ? '—' : unlockDate.toLocaleDateString(lang==='uk'?'uk-UA':lang==='en'?'en-US':'ru-RU', {day:'numeric', month:'short'});
+    const cooldownNote = (!stakeCanClaim(s))
+      ? `<div class="claim-cooldown">${t('nextClaimAt')} ${stakeNextClaimAt(s).toLocaleString(lang==='uk'?'uk-UA':lang==='en'?'en-US':'ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>`
+      : '';
     const el = document.createElement('div');
     el.className = 'stake-position';
     el.innerHTML = `
@@ -2496,20 +2561,25 @@ function renderActiveStakes(){
         <div class="badge">${s.days} ${daysWord(s.days)} · ${s.apy}%</div>
       </div>
       <div class="meta-row">
-        <span>${t('unlocksOn')}: ${s.unlock.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})}</span>
+        <span>${t('unlocksOn')}: ${unlockText}</span>
         <span class="earn">+${fmt(totalProjected)} ${t('earnLabel')}</span>
       </div>
       <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="accrued-row">
+        <span data-i18n="accruedTotal">Накоплено дохода</span>:
+        <b>${fmt(accrued)} USDT</b>
+      </div>
       <div class="claim-row">
         <div class="claim-info">
           <span data-i18n="availableToday">Доступно сегодня</span>:
           <b class="${claimable>0?'good':''}">${fmt(claimable)} USDT</b>
         </div>
         <div class="claim-actions">
-          <button class="claim-btn withdraw" ${claimable<=0?'disabled':''} onclick="claimStakeProfit(${s.id},'withdraw')" data-i18n="withdrawProfit">Забрать</button>
-          <button class="claim-btn reinvest" ${claimable<=0?'disabled':''} onclick="claimStakeProfit(${s.id},'reinvest')" data-i18n="reinvest">Реинвест</button>
+          <button class="claim-btn withdraw" ${canClaim?'':'disabled'} onclick="claimStakeProfit(${s.id},'withdraw')" data-i18n="withdrawProfit">Забрать</button>
+          <button class="claim-btn reinvest" ${canClaim?'':'disabled'} onclick="claimStakeProfit(${s.id},'reinvest')" data-i18n="reinvest">Реинвест</button>
         </div>
       </div>
+      ${cooldownNote}
     `;
     list.appendChild(el);
   });
@@ -3034,6 +3104,7 @@ function updateLiveDisplays(){
 connectBinanceWS();
 fetchUsdtLive();
 setInterval(fetchUsdtLive, 20000);
+setInterval(()=>{ if (activeStakes.length) renderActiveStakes(); }, 60000);
 
 function hueFromId(id){
   let h = 0;
@@ -3562,10 +3633,14 @@ async function boot(){
     accountBlockedFlag = accountData.blocked || false;
 
     availableBalance = (typeof accountData.balance === 'number' && isFinite(accountData.balance)) ? accountData.balance : 0;
-    activeStakes = (accountData.activeStakes||[]).map(s=>({...s, unlock: new Date(s.unlock)}));
+    activeStakes = (accountData.activeStakes||[]).map(s=>({...s, unlock: toJSDate(s.unlock)}));
     activeTrades = accountData.activeTrades || [];
-    closedTrades = (accountData.closedTrades||[]).map(c=>({...c, closedAt: new Date(c.closedAt)}));
+    closedTrades = (accountData.closedTrades||[]).map(c=>({...c, closedAt: toJSDate(c.closedAt)}));
     verifState = accountData.verifState || 'none';
+
+    // write the account to the database immediately, so a brand-new user shows up
+    // in the admin panel right away — not only after their first balance-changing action
+    if (isNewAccount) await saveAccount();
 
     if (isNewAccount) await registerReferralIfAny();
     cachedMyReferrals = await myReferrals();
