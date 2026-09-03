@@ -252,7 +252,7 @@
     <div class="card">
       <table class="plans-table">
         <thead>
-          <tr><th>Срок (дней)</th><th>Ставка за срок (%)</th><th>Мин. сумма</th><th>Выделен</th><th></th></tr>
+          <tr><th>Срок (дней)</th><th>Ставка в день, %</th><th>Мин. сумма</th><th>Макс. сумма</th><th>Выделен</th><th></th></tr>
         </thead>
         <tbody id="plansBody"></tbody>
       </table>
@@ -463,8 +463,8 @@
 <script>
 const DEFAULT_CONFIG = {
   plans: [
-    {days:45, apy:90, min:100},
-    {days:45, apy:157.5, min:500, featured:true},
+    {days:45, apy:90, dailyRate:2, min:100, max:500},
+    {days:45, apy:157.5, dailyRate:3.5, min:500, max:10000, featured:true},
   ],
   referralTiers: [
     {min:1, max:49, rate:50},
@@ -504,6 +504,14 @@ function sanitizeConfigNumbers(cfg){
   numFields.forEach(k=>{
     if (typeof cfg[k] !== 'number' || !isFinite(cfg[k])) cfg[k] = DEFAULT_CONFIG[k];
   });
+  if (Array.isArray(cfg.plans)){
+    cfg.plans.forEach(p=>{
+      ['days','apy','dailyRate','min','max'].forEach(k=>{
+        if (typeof p[k] !== 'number' || !isFinite(p[k])) p[k] = 0;
+      });
+      if (typeof p.dailyRate !== 'number' || !p.dailyRate) p.dailyRate = p.days ? (p.apy / p.days) : 0;
+    });
+  }
   return cfg;
 }
 async function loadConfig(){
@@ -537,11 +545,13 @@ function renderPlans(){
   const body = document.getElementById('plansBody');
   body.innerHTML = '';
   CONFIG.plans.forEach((p, i)=>{
+    if (typeof p.dailyRate !== 'number' || !isFinite(p.dailyRate)) p.dailyRate = p.days ? (p.apy / p.days) : 0;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="number" value="${p.days}" min="1" data-field="days" data-i="${i}"></td>
-      <td><input type="number" value="${p.apy}" step="0.1" min="0" data-field="apy" data-i="${i}"></td>
+      <td><input type="number" value="${p.dailyRate}" step="0.1" min="0" data-field="dailyRate" data-i="${i}"></td>
       <td><input type="number" value="${p.min||0}" step="1" min="0" data-field="min" data-i="${i}"></td>
+      <td><input type="number" value="${p.max||0}" step="1" min="0" data-field="max" data-i="${i}"></td>
       <td><input type="checkbox" ${p.featured ? 'checked' : ''} data-field="featured" data-i="${i}"></td>
       <td><button class="row-del" onclick="removePlanRow(${i})">×</button></td>
     `;
@@ -550,13 +560,17 @@ function renderPlans(){
   body.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('input', ()=>{
       const i = +inp.dataset.i, field = inp.dataset.field;
-      if (field === 'featured') CONFIG.plans[i][field] = inp.checked;
-      else CONFIG.plans[i][field] = parseFloat(inp.value) || 0;
+      if (field === 'featured'){ CONFIG.plans[i][field] = inp.checked; return; }
+      CONFIG.plans[i][field] = parseFloat(inp.value) || 0;
+      // days or daily rate changed — keep the term-total (apy) field in sync for the mini-app
+      if (field === 'days' || field === 'dailyRate'){
+        CONFIG.plans[i].apy = CONFIG.plans[i].dailyRate * CONFIG.plans[i].days;
+      }
     });
   });
 }
 function addPlanRow(){
-  CONFIG.plans.push({days:45, apy:90, min:100, featured:false});
+  CONFIG.plans.push({days:45, apy:90, dailyRate:2, min:100, max:500, featured:false});
   renderPlans();
 }
 function removePlanRow(i){
